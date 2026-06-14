@@ -624,11 +624,61 @@ function getFilteredDiscovery(): Array<DiscoveryLead & { duplicate?: Lead }> {
     })
 }
 
+function getViewMeta(view: ViewKey): { title: string; description: string } {
+  const map: Record<ViewKey, { title: string; description: string }> = {
+    dashboard: {
+      title: 'Dashboard kerja harian',
+      description: 'Mulai hari dengan melihat overview company, prioritas follow up, dan pergerakan terbaru.',
+    },
+    leads: {
+      title: 'Lead database',
+      description: 'Cari company dengan cepat, cek duplicate, dan buka workspace customer tanpa rasa seperti Excel.',
+    },
+    contacts: {
+      title: 'Contact history',
+      description: 'Update follow up dan pantau semua histori komunikasi dari satu tempat.',
+    },
+    quotations: {
+      title: 'Quotation management',
+      description: 'Simpan semua penawaran yang pernah dikirim agar kamu tahu customer mana yang sudah pernah di-offer.',
+    },
+    discovery: {
+      title: 'Lead discovery',
+      description: 'Temukan prospect baru lalu blokir duplicate sebelum masuk ke database.',
+    },
+    assistant: {
+      title: 'AI assistant',
+      description: 'Buat draft email atau ringkasan dengan cepat dari data customer yang sudah ada.',
+    },
+  }
+  return map[view]
+}
+
+function getPriorityLeads(): Lead[] {
+  return [...state.data.leads]
+    .sort((a, b) => {
+      const aScore =
+        (a.status === 'Quotation Sent' ? 4 : 0) +
+        (a.status === 'Negotiation' ? 5 : 0) +
+        (a.status === 'Follow Up' ? 3 : 0) +
+        (a.contacts[0]?.responseStatus === 'Follow-up Required' ? 2 : 0)
+      const bScore =
+        (b.status === 'Quotation Sent' ? 4 : 0) +
+        (b.status === 'Negotiation' ? 5 : 0) +
+        (b.status === 'Follow Up' ? 3 : 0) +
+        (b.contacts[0]?.responseStatus === 'Follow-up Required' ? 2 : 0)
+      return bScore - aScore || getLastActivityDate(b).localeCompare(getLastActivityDate(a))
+    })
+    .slice(0, 5)
+}
+
 function renderApp(): void {
   const filteredLeads = getFilteredLeads()
   const activeLead = getLeadById(state.activeLeadId) ?? filteredLeads[0] ?? state.data.leads[0]
   const reminders = getReminders(state.data.leads)
   const metrics = getWindowMetrics()
+  const viewMeta = getViewMeta(state.view)
+  const topReminder = reminders[0]
   const countries = ['All', ...Object.keys(getCountryCounts(state.data.leads)).sort()]
   const discoveryCountries = ['All', ...new Set(state.data.discovery.map((item) => item.country)).values()]
   const discoveryCategories = ['All', ...new Set(state.data.discovery.map((item) => item.industryCategory)).values()]
@@ -640,55 +690,92 @@ function renderApp(): void {
   }
 
   app.innerHTML = `
-    <div class="shell">
-      <header class="hero-shell">
-        <div>
-          <p class="eyebrow">Export sales control</p>
-          <h1>CRM Export Marketing</h1>
-          <p class="hero-copy">
-            Simpan company yang sedang kamu tawarkan, kontrol status, lihat histori kontak dan quotation, lalu pakai reminder untuk tahu siapa yang harus kamu follow up hari ini.
-          </p>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <div class="brand-mark">CE</div>
+          <div>
+            <p class="eyebrow">Export workspace</p>
+            <h1>CRM Export Marketing</h1>
+          </div>
         </div>
-        <div class="hero-actions">
-          <button class="btn btn-primary" data-action="export-excel">Export to Excel</button>
-          <button class="btn" data-action="load-sample">Reload sample</button>
-          <button class="btn btn-danger" data-action="reset-data">Reset data</button>
-        </div>
-      </header>
+        <p class="sidebar-copy">Satu tempat untuk cek company, histori penawaran, duplicate risk, dan prioritas follow up harian.</p>
+        <nav class="nav-stack">${renderTabs()}</nav>
+        <section class="sidebar-card">
+          <span>Quick pulse</span>
+          <strong>${reminders.length}</strong>
+          <small>${topReminder ? escapeHtml(topReminder.leadName) + ' perlu perhatian' : 'Tidak ada reminder mendesak'}</small>
+        </section>
+        <section class="sidebar-card">
+          <span>Database size</span>
+          <strong>${state.data.leads.length}</strong>
+          <small>${Object.keys(getCountryCounts(state.data.leads)).length} negara • ${Object.keys(getSourceCounts(state.data.leads)).length} source</small>
+        </section>
+      </aside>
 
-      <section class="highlight-grid">
-        <article class="highlight-card"><span>Total company</span><strong>${state.data.leads.length}</strong><small>${Object.keys(getCountryCounts(state.data.leads)).length} country coverage</small></article>
-        <article class="highlight-card"><span>Due follow up</span><strong>${reminders.length}</strong><small>${reminders.filter((item) => item.priority === 'high').length} high priority</small></article>
-        <article class="highlight-card"><span>Quotation sent</span><strong>${flattenQuotations(state.data.leads).length}</strong><small>${formatCurrency(flattenQuotations(state.data.leads).reduce((sum, item) => sum + item.quotationValue, 0))}</small></article>
-        <article class="highlight-card"><span>Untouched discovery</span><strong>${getFilteredDiscovery().filter((item) => !item.duplicate).length}</strong><small>potential new customer</small></article>
-      </section>
+      <div class="content-shell">
+        <header class="topbar">
+          <div class="topbar-copy">
+            <p class="eyebrow">${escapeHtml(viewMeta.title)}</p>
+            <h2>${escapeHtml(viewMeta.description)}</h2>
+          </div>
+          <div class="topbar-actions">
+            <label class="topbar-search">
+              <span>Search</span>
+              <input id="global-search" type="search" value="${escapeHtml(state.leadSearch)}" placeholder="Search company / email / website" />
+            </label>
+            <button class="btn btn-primary" data-view="leads">+ New Customer</button>
+            <button class="btn" data-view="contacts">+ Update Follow Up</button>
+            <button class="btn" data-action="export-excel">Export</button>
+          </div>
+        </header>
 
-      <nav class="tabs">${renderTabs()}</nav>
+        <section class="hero-band">
+          <div class="hero-intro">
+            <p class="eyebrow">Overview cepat</p>
+            <h3>UI baru difokuskan untuk scan cepat, update cepat, dan kontrol customer lebih kuat dari Excel.</h3>
+            <p class="hero-copy">
+              Semua informasi penting dibuat lebih mudah dibaca: company coverage, reminder, quotation, dan histori customer dalam satu workspace yang konsisten.
+            </p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn" data-action="load-sample">Reload sample</button>
+            <button class="btn btn-danger" data-action="reset-data">Reset data</button>
+          </div>
+        </section>
 
-      ${
-        state.notice
-          ? `<div class="notice ${state.notice.tone}">
-              <span>${escapeHtml(state.notice.text)}</span>
-              <button class="icon-btn" data-action="dismiss-notice">×</button>
-            </div>`
-          : ''
-      }
+        <section class="hero-metrics">
+          <article class="highlight-card accent-blue"><span>Total company</span><strong>${state.data.leads.length}</strong><small>${Object.keys(getCountryCounts(state.data.leads)).length} country coverage</small></article>
+          <article class="highlight-card accent-orange"><span>Due follow up</span><strong>${reminders.length}</strong><small>${reminders.filter((item) => item.priority === 'high').length} high priority</small></article>
+          <article class="highlight-card accent-violet"><span>Quotation sent</span><strong>${flattenQuotations(state.data.leads).length}</strong><small>${formatCurrency(flattenQuotations(state.data.leads).reduce((sum, item) => sum + item.quotationValue, 0))}</small></article>
+          <article class="highlight-card accent-green"><span>Untouched discovery</span><strong>${getFilteredDiscovery().filter((item) => !item.duplicate).length}</strong><small>potential new customer</small></article>
+        </section>
 
-      <main class="main-content">
         ${
-          state.view === 'dashboard'
-            ? renderDashboard(metrics, reminders)
-            : state.view === 'leads'
-              ? renderLeadDatabase(filteredLeads, activeLead, countries)
-              : state.view === 'contacts'
-                ? renderContacts(activeLead)
-                : state.view === 'quotations'
-                  ? renderQuotations(activeLead)
-                  : state.view === 'discovery'
-                    ? renderDiscovery(discoveryCountries, discoveryCategories, discoveryTypes)
-                    : renderAssistant()
+          state.notice
+            ? `<div class="notice ${state.notice.tone}">
+                <span>${escapeHtml(state.notice.text)}</span>
+                <button class="icon-btn" data-action="dismiss-notice">×</button>
+              </div>`
+            : ''
         }
-      </main>
+
+        <main class="main-content">
+          ${
+            state.view === 'dashboard'
+              ? renderDashboard(metrics, reminders)
+              : state.view === 'leads'
+                ? renderLeadDatabase(filteredLeads, activeLead, countries)
+                : state.view === 'contacts'
+                  ? renderContacts(activeLead)
+                  : state.view === 'quotations'
+                    ? renderQuotations(activeLead)
+                    : state.view === 'discovery'
+                      ? renderDiscovery(discoveryCountries, discoveryCategories, discoveryTypes)
+                      : renderAssistant()
+          }
+        </main>
+      </div>
     </div>
   `
 }
@@ -702,7 +789,16 @@ function renderTabs(): string {
     { key: 'discovery', label: 'Lead Discovery' },
     { key: 'assistant', label: 'AI Assistant' },
   ]
-  return tabs.map((tab) => `<button class="tab ${state.view === tab.key ? 'active' : ''}" data-view="${tab.key}">${tab.label}</button>`).join('')
+  return tabs
+    .map(
+      (tab) => `
+        <button class="tab ${state.view === tab.key ? 'active' : ''}" data-view="${tab.key}">
+          <span class="tab-dot"></span>
+          <span>${tab.label}</span>
+        </button>
+      `,
+    )
+    .join('')
 }
 
 function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders: Reminder[]): string {
@@ -710,12 +806,13 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
   const sourceCounts = Object.entries(getSourceCounts(state.data.leads)).sort((a, b) => b[1] - a[1]).slice(0, 6)
   const pipelineCounts = getPipelineCounts(state.data.leads)
   const recent = getRecentActivity()
+  const priorityLeads = getPriorityLeads()
   return `
     <section class="section-stack">
       <div class="section-head">
         <div>
-          <h2>Overview</h2>
-          <p>Lihat company mana saja yang ada di database, statusnya, dan siapa yang harus difollow up.</p>
+          <h2>Dashboard yang lebih mudah discan</h2>
+          <p>Informasi dipecah menjadi empat area: angka ringkas, market overview, fokus hari ini, dan movement terbaru.</p>
         </div>
         <div class="segment-control">
           <button data-timeframe="daily" class="${state.timeframe === 'daily' ? 'active' : ''}">Daily</button>
@@ -724,42 +821,64 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
         </div>
       </div>
 
-      <div class="metric-grid">
-        <article class="metric-card"><span>New leads</span><strong>${metrics.newLeads}</strong></article>
-        <article class="metric-card"><span>Emails sent</span><strong>${metrics.emailsSent}</strong></article>
-        <article class="metric-card"><span>Responses</span><strong>${metrics.responsesReceived}</strong></article>
-        <article class="metric-card"><span>Quotations</span><strong>${metrics.quotationsSent}</strong></article>
-        <article class="metric-card"><span>Orders won</span><strong>${metrics.ordersWon}</strong></article>
-        <article class="metric-card"><span>Orders lost</span><strong>${metrics.ordersLost}</strong></article>
+      <div class="focus-grid">
+        <article class="metric-card featured-metric">
+          <span>Aktivitas periode ini</span>
+          <strong>${metrics.emailsSent + metrics.responsesReceived + metrics.quotationsSent}</strong>
+          <small>Email, response, dan quotation di periode aktif</small>
+        </article>
+        <article class="metric-card"><span>New leads</span><strong>${metrics.newLeads}</strong><small>company baru yang masuk database</small></article>
+        <article class="metric-card"><span>Responses</span><strong>${metrics.responsesReceived}</strong><small>customer yang sudah memberi jawaban</small></article>
+        <article class="metric-card"><span>Orders won</span><strong>${metrics.ordersWon}</strong><small>customer yang berhasil closing</small></article>
       </div>
 
-      <div class="dashboard-grid">
-        <article class="panel">
-          <div class="panel-head"><h3>Leads by country</h3><span>Market coverage</span></div>
-          <div class="stack-list">
-            ${countryCounts.map(([country, count]) => `<div class="row-line"><span>${escapeHtml(country)}</span><strong>${count}</strong></div>`).join('')}
+      <div class="dashboard-grid redesigned-grid">
+        <article class="panel market-panel">
+          <div class="panel-head"><h3>Database overview</h3><span>Negara, source, dan status</span></div>
+          <div class="overview-split">
+            <div class="stack-list">
+              <h4>Leads by country</h4>
+              ${countryCounts.map(([country, count]) => `<div class="row-line"><span>${escapeHtml(country)}</span><strong>${count}</strong></div>`).join('')}
+            </div>
+            <div class="stack-list">
+              <h4>Leads by source</h4>
+              ${sourceCounts.map(([source, count]) => `<div class="row-line"><span>${escapeHtml(source)}</span><strong>${count}</strong></div>`).join('')}
+            </div>
+            <div class="stack-list">
+              <h4>Status pipeline</h4>
+              ${pipelineCounts
+                .filter((item) => item.count > 0)
+                .map((item) => `<div class="row-line"><span>${escapeHtml(item.status)}</span><strong>${item.count}</strong></div>`)
+                .join('')}
+            </div>
           </div>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h3>Leads by source</h3><span>Where your companies come from</span></div>
-          <div class="stack-list">
-            ${sourceCounts.map(([source, count]) => `<div class="row-line"><span>${escapeHtml(source)}</span><strong>${count}</strong></div>`).join('')}
+          <div class="panel-head"><h3>Prioritas customer</h3><span>Customer yang perlu kamu lihat lebih dulu</span></div>
+          <div class="priority-list">
+            ${
+              priorityLeads.length
+                ? priorityLeads
+                    .map(
+                      (lead) => `
+                        <button class="priority-card" data-action="select-lead" data-id="${lead.id}">
+                          <div>
+                            <strong>${escapeHtml(lead.companyName)}</strong>
+                            <p>${escapeHtml(lead.country)} • ${escapeHtml(lead.sourceOfLead)}</p>
+                          </div>
+                          <span class="status-pill">${escapeHtml(lead.status)}</span>
+                        </button>
+                      `,
+                    )
+                    .join('')
+                : '<p class="empty">Belum ada customer prioritas.</p>'
+            }
           </div>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h3>Status pipeline</h3><span>Current company position</span></div>
-          <div class="stack-list">
-            ${pipelineCounts
-              .filter((item) => item.count > 0)
-              .map((item) => `<div class="row-line"><span>${escapeHtml(item.status)}</span><strong>${item.count}</strong></div>`)
-              .join('')}
-          </div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head"><h3>Reminder system</h3><span>Who needs attention today</span></div>
+          <div class="panel-head"><h3>Reminder system</h3><span>Due today, overdue, dan inactive</span></div>
           <div class="stack-list">
             ${
               reminders.length
@@ -783,7 +902,7 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
         </article>
 
         <article class="panel full-span">
-          <div class="panel-head"><h3>Recent movements</h3><span>Latest contact and quotation activity</span></div>
+          <div class="panel-head"><h3>Recent movements</h3><span>Apa yang terakhir berubah di database customer</span></div>
           <div class="activity-list">
             ${
               recent.length
@@ -813,10 +932,16 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
   const duplicate = activeLead ? findDuplicateLead(activeLead.companyName, activeLead.website, activeLead.email, activeLead.id) : undefined
   return `
     <section class="section-stack">
-      <div class="two-column">
-        <article class="panel">
-          <div class="panel-head"><h2>Lead database</h2><span>Control company data better than Excel</span></div>
-          <div class="filter-grid">
+      <div class="database-layout">
+        <article class="panel database-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Lead database yang terasa seperti app, bukan spreadsheet</h2>
+              <span>Cari cepat, filter cepat, lalu buka workspace customer tanpa baca tabel terlalu lama.</span>
+            </div>
+            <button class="btn btn-primary" data-action="focus-create">+ New Customer</button>
+          </div>
+          <div class="filter-grid redesigned-filter">
             <label><span>Search</span><input id="lead-search" type="search" value="${escapeHtml(state.leadSearch)}" placeholder="Company, country, contact, website" /></label>
             <label><span>Country</span><select id="country-filter">${countries
               .map((country) => `<option value="${escapeHtml(country)}" ${state.countryFilter === country ? 'selected' : ''}>${escapeHtml(country)}</option>`)
@@ -825,77 +950,89 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
               .map((status) => `<option value="${escapeHtml(status)}" ${state.statusFilter === status ? 'selected' : ''}>${escapeHtml(status)}</option>`)
               .join('')}</select></label>
           </div>
-          <div class="table-shell">
-            <table>
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Country</th>
-                  <th>Status</th>
-                  <th>Last contact</th>
-                  <th>Feedback</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${
-                  filteredLeads.length
-                    ? filteredLeads
-                        .map(
-                          (lead) => `
-                            <tr class="${activeLead?.id === lead.id ? 'selected-row' : ''}" data-action="select-lead" data-id="${lead.id}">
-                              <td><strong>${escapeHtml(lead.companyName)}</strong><div class="muted">${escapeHtml(lead.sourceOfLead)}</div></td>
-                              <td>${escapeHtml(lead.country)}</td>
-                              <td><span class="status-pill">${escapeHtml(lead.status)}</span></td>
-                              <td>${formatDate(getLastActivityDate(lead))}</td>
-                              <td>${escapeHtml(getLastFeedback(lead))}</td>
-                            </tr>
-                          `,
-                        )
-                        .join('')
-                    : '<tr><td colspan="5"><div class="empty">No leads match the current filter.</div></td></tr>'
-                }
-              </tbody>
-            </table>
+          <div class="lead-table">
+            ${
+              filteredLeads.length
+                ? filteredLeads
+                    .map(
+                      (lead) => `
+                        <button class="lead-row ${activeLead?.id === lead.id ? 'selected-row' : ''}" data-action="select-lead" data-id="${lead.id}">
+                          <div class="lead-main">
+                            <strong>${escapeHtml(lead.companyName)}</strong>
+                            <p>${escapeHtml(lead.country)} • ${escapeHtml(lead.sourceOfLead)} • ${escapeHtml(lead.industryCategory)}</p>
+                          </div>
+                          <div class="lead-meta">
+                            <span class="status-pill">${escapeHtml(lead.status)}</span>
+                            <small>Last contact ${formatDate(getLastActivityDate(lead))}</small>
+                            <small>${escapeHtml(getLastFeedback(lead))}</small>
+                          </div>
+                        </button>
+                      `,
+                    )
+                    .join('')
+                : '<div class="empty">No leads match the current filter.</div>'
+            }
           </div>
         </article>
 
-        <article class="panel">
-          <div class="panel-head"><h2>Create new customer</h2><span>Stop double sent with duplicate check</span></div>
-          <form id="lead-form" class="form-grid">
-            <label><span>Company Name</span><input name="companyName" required /></label>
-            <label><span>Country</span><input name="country" required /></label>
-            <label><span>City</span><input name="city" /></label>
-            <label><span>Website</span><input name="website" type="url" /></label>
-            <label><span>Contact Person</span><input name="contactPerson" /></label>
-            <label><span>Email</span><input name="email" type="email" /></label>
-            <label><span>Phone Number</span><input name="phoneNumber" /></label>
-            <label><span>Industry Category</span><input name="industryCategory" required /></label>
-            <label><span>Source of Lead</span><input name="sourceOfLead" required /></label>
-            <label><span>Customer Type</span><select name="customerType"><option>Distributor</option><option>Importer</option><option>Contractor</option><option>Stockist</option><option>Industrial Supplier</option></select></label>
-            <label><span>Status</span><select name="status">${pipelineStatuses.map((status) => `<option value="${status}">${status}</option>`).join('')}</select></label>
-            <label class="wide"><span>Notes</span><textarea name="notes" rows="3" placeholder="Initial customer note"></textarea></label>
-            <div class="form-actions wide"><button class="btn btn-primary" type="submit">Save customer</button></div>
-          </form>
-        </article>
+        <aside class="workspace-side">
+          <article class="panel create-panel" id="create-customer-panel">
+            <div class="panel-head"><h2>Create new customer</h2><span>Form dibuat lebih ringkas agar cepat dipakai berulang kali</span></div>
+            <form id="lead-form" class="form-grid">
+              <label><span>Company Name</span><input name="companyName" required /></label>
+              <label><span>Country</span><input name="country" required /></label>
+              <label><span>City</span><input name="city" /></label>
+              <label><span>Website</span><input name="website" type="url" /></label>
+              <label><span>Contact Person</span><input name="contactPerson" /></label>
+              <label><span>Email</span><input name="email" type="email" /></label>
+              <label><span>Phone Number</span><input name="phoneNumber" /></label>
+              <label><span>Industry Category</span><input name="industryCategory" required /></label>
+              <label><span>Source of Lead</span><input name="sourceOfLead" required /></label>
+              <label><span>Customer Type</span><select name="customerType"><option>Distributor</option><option>Importer</option><option>Contractor</option><option>Stockist</option><option>Industrial Supplier</option></select></label>
+              <label><span>Status</span><select name="status">${pipelineStatuses.map((status) => `<option value="${status}">${status}</option>`).join('')}</select></label>
+              <label class="wide"><span>Notes</span><textarea name="notes" rows="3" placeholder="Initial customer note"></textarea></label>
+              <div class="form-actions wide"><button class="btn btn-primary" type="submit">Save customer</button></div>
+            </form>
+          </article>
+
+          <article class="panel quick-tip-panel">
+            <div class="panel-head"><h3>Quick UX idea</h3><span>Yang bikin aplikasi terasa ringan</span></div>
+            <div class="stack-list">
+              <div class="row-line"><span>Search selalu terlihat</span><strong>lebih cepat cek duplicate</strong></div>
+              <div class="row-line"><span>Lead row jadi card</span><strong>lebih mudah discan</strong></div>
+              <div class="row-line"><span>Workspace customer</span><strong>update tanpa pindah-pindah</strong></div>
+            </div>
+          </article>
+        </aside>
       </div>
 
-      <article class="panel">
-        <div class="panel-head"><h2>Selected customer</h2><span>One place to see company, contact history, quotation, and follow up</span></div>
+      <article class="panel workspace-panel">
+        <div class="panel-head"><h2>Customer workspace</h2><span>Semua informasi customer penting dikumpulkan di area kerja yang lebih nyaman dilihat</span></div>
         ${
           activeLead
             ? `
-              <div class="detail-grid">
-                <div class="detail-card">
-                  <div class="detail-head">
-                    <h3>${escapeHtml(activeLead.companyName)}</h3>
+              <div class="workspace-grid">
+                <div class="workspace-profile">
+                  <div class="workspace-hero">
+                    <div>
+                      <p class="eyebrow">Selected customer</p>
+                      <h3>${escapeHtml(activeLead.companyName)}</h3>
+                      <p>${escapeHtml(activeLead.country)} • ${escapeHtml(activeLead.city)} • ${escapeHtml(activeLead.customerType)}</p>
+                    </div>
                     <span class="status-pill">${escapeHtml(activeLead.status)}</span>
                   </div>
-                  <p>${escapeHtml(activeLead.country)} • ${escapeHtml(activeLead.city)} • ${escapeHtml(activeLead.customerType)}</p>
-                  <p>${activeLead.website ? `<a href="${escapeHtml(activeLead.website)}" target="_blank">${escapeHtml(activeLead.website)}</a>` : 'No website'}</p>
-                  <p>${escapeHtml(activeLead.contactPerson || 'No contact person')} • ${escapeHtml(activeLead.email || 'No email')}</p>
-                  <p>${escapeHtml(activeLead.phoneNumber || 'No phone number')}</p>
-                  <p>${escapeHtml(activeLead.notes || 'No notes')}</p>
-                  <label class="inline-select"><span>Update status</span><select data-role="lead-status" data-id="${activeLead.id}">${pipelineStatuses
+                  <div class="info-pills">
+                    <div class="info-pill"><strong>Source</strong><span>${escapeHtml(activeLead.sourceOfLead)}</span></div>
+                    <div class="info-pill"><strong>Last contact</strong><span>${formatDate(getLastActivityDate(activeLead))}</span></div>
+                    <div class="info-pill"><strong>Feedback</strong><span>${escapeHtml(getLastFeedback(activeLead))}</span></div>
+                  </div>
+                  <div class="workspace-contact">
+                    <p>${activeLead.website ? `<a href="${escapeHtml(activeLead.website)}" target="_blank">${escapeHtml(activeLead.website)}</a>` : 'No website'}</p>
+                    <p>${escapeHtml(activeLead.contactPerson || 'No contact person')} • ${escapeHtml(activeLead.email || 'No email')}</p>
+                    <p>${escapeHtml(activeLead.phoneNumber || 'No phone number')}</p>
+                  </div>
+                  <div class="notes-box">${escapeHtml(activeLead.notes || 'No notes')}</div>
+                  <label class="inline-select status-select-row"><span>Update status</span><select data-role="lead-status" data-id="${activeLead.id}">${pipelineStatuses
                     .map((status) => `<option value="${status}" ${status === activeLead.status ? 'selected' : ''}>${status}</option>`)
                     .join('')}</select></label>
                   ${
@@ -904,45 +1041,55 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
                       : ''
                   }
                 </div>
-                <div class="detail-card">
-                  <h3>Contact history</h3>
-                  ${
-                    activeLead.contacts.length
-                      ? activeLead.contacts
-                          .slice()
-                          .sort((a, b) => b.dateContacted.localeCompare(a.dateContacted))
-                          .map(
-                            (contact) => `
-                              <div class="mini-item">
-                                <strong>${formatDate(contact.dateContacted)} • ${escapeHtml(contact.method)}</strong>
-                                <p>${escapeHtml(contact.subject)}</p>
-                                <small>${escapeHtml(contact.responseStatus)}${contact.followUpDate ? ` • Follow up ${formatDate(contact.followUpDate)}` : ''}</small>
-                              </div>
-                            `,
-                          )
-                          .join('')
-                      : '<p class="empty">No contact history yet.</p>'
-                  }
-                </div>
-                <div class="detail-card">
-                  <h3>Quotation history</h3>
-                  ${
-                    activeLead.quotations.length
-                      ? activeLead.quotations
-                          .slice()
-                          .sort((a, b) => b.dateSent.localeCompare(a.dateSent))
-                          .map(
-                            (quotation) => `
-                              <div class="mini-item">
-                                <strong>${escapeHtml(quotation.quotationNumber)} • ${formatCurrency(quotation.quotationValue)}</strong>
-                                <p>${escapeHtml(quotation.productType)}</p>
-                                <small>Sent ${formatDate(quotation.dateSent)} • Valid ${formatDate(quotation.validityDate)}</small>
-                              </div>
-                            `,
-                          )
-                          .join('')
-                      : '<p class="empty">No quotation history yet.</p>'
-                  }
+
+                <div class="workspace-columns">
+                  <div class="detail-card timeline-card">
+                    <div class="panel-head compact-head"><h3>Contact timeline</h3><span>Activity terbaru</span></div>
+                    ${
+                      activeLead.contacts.length
+                        ? activeLead.contacts
+                            .slice()
+                            .sort((a, b) => b.dateContacted.localeCompare(a.dateContacted))
+                            .map(
+                              (contact) => `
+                                <div class="timeline-item">
+                                  <div class="timeline-head">
+                                    <strong>${escapeHtml(contact.method)}</strong>
+                                    <span>${formatDate(contact.dateContacted)}</span>
+                                  </div>
+                                  <p>${escapeHtml(contact.subject)}</p>
+                                  <small>${escapeHtml(contact.responseStatus)}${contact.followUpDate ? ` • Follow up ${formatDate(contact.followUpDate)}` : ''}</small>
+                                </div>
+                              `,
+                            )
+                            .join('')
+                        : '<p class="empty">No contact history yet.</p>'
+                    }
+                  </div>
+
+                  <div class="detail-card timeline-card">
+                    <div class="panel-head compact-head"><h3>Quotation timeline</h3><span>Offer yang pernah dikirim</span></div>
+                    ${
+                      activeLead.quotations.length
+                        ? activeLead.quotations
+                            .slice()
+                            .sort((a, b) => b.dateSent.localeCompare(a.dateSent))
+                            .map(
+                              (quotation) => `
+                                <div class="timeline-item">
+                                  <div class="timeline-head">
+                                    <strong>${escapeHtml(quotation.quotationNumber)}</strong>
+                                    <span>${formatDate(quotation.dateSent)}</span>
+                                  </div>
+                                  <p>${escapeHtml(quotation.productType)} • ${formatCurrency(quotation.quotationValue)}</p>
+                                  <small>Valid ${formatDate(quotation.validityDate)} • ${escapeHtml(quotation.customerFeedback || 'No feedback')}</small>
+                                </div>
+                              `,
+                            )
+                            .join('')
+                        : '<p class="empty">No quotation history yet.</p>'
+                    }
+                  </div>
                 </div>
               </div>
             `
