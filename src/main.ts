@@ -15,6 +15,7 @@ type ContactMethod = 'Email' | 'LinkedIn' | 'WhatsApp' | 'Phone'
 type ResponseStatus = 'Pending' | 'Responded' | 'No Response' | 'Follow-up Required'
 type ViewKey = 'dashboard' | 'leads' | 'contacts' | 'quotations' | 'discovery' | 'assistant'
 type ReportWindow = 'daily' | 'weekly' | 'monthly'
+type UiLanguage = 'id' | 'en'
 type AssistantType =
   | 'Introduction Email'
   | 'Follow-up Email'
@@ -103,6 +104,7 @@ interface AppData {
 
 interface AppState {
   data: AppData
+  uiLanguage: UiLanguage
   view: ViewKey
   timeframe: ReportWindow
   leadSearch: string
@@ -121,6 +123,7 @@ interface AppState {
 }
 
 const storageKey = 'crm-export-marketing-v1'
+const uiLanguageKey = 'crm-export-marketing-ui-language'
 const pipelineStatuses: LeadStatus[] = [
   'New Lead',
   'Contacted',
@@ -141,6 +144,392 @@ const assistantTypes: AssistantType[] = [
   'Complaint Response',
   'Meeting Summary',
 ]
+const translations: Record<UiLanguage, Record<string, string>> = {
+  id: {
+    all: 'Semua',
+    exportWorkspace: 'Export workspace',
+    sidebarCopy: 'Satu tempat untuk cek company, histori penawaran, duplicate risk, dan prioritas follow up harian.',
+    quickPulse: 'Quick pulse',
+    noUrgentReminder: 'Tidak ada reminder mendesak',
+    needsAttention: 'perlu perhatian',
+    databaseSize: 'Database size',
+    countries: 'negara',
+    sources: 'source',
+    language: 'Bahasa',
+    search: 'Cari',
+    searchGlobalPlaceholder: 'Cari company / email / website',
+    newCustomer: '+ Customer Baru',
+    updateFollowUpShort: '+ Update Follow Up',
+    export: 'Export',
+    quickOverview: 'Overview cepat',
+    heroTitle: 'UI baru difokuskan untuk scan cepat, update cepat, dan kontrol customer lebih kuat dari Excel.',
+    heroCopy:
+      'Semua informasi penting dibuat lebih mudah dibaca: company coverage, reminder, quotation, dan histori customer dalam satu workspace yang konsisten.',
+    reloadSample: 'Muat ulang sample',
+    resetData: 'Reset data',
+    totalCompany: 'Total company',
+    countryCoverage: 'cakupan negara',
+    dueFollowUp: 'Jatuh tempo follow up',
+    highPriority: 'prioritas tinggi',
+    quotationSent: 'Quotation terkirim',
+    untouchedDiscovery: 'Discovery belum dipakai',
+    potentialNewCustomer: 'calon customer baru',
+    dashboard: 'Dashboard',
+    leadDatabase: 'Lead Database',
+    contactHistory: 'Riwayat Kontak',
+    quotationManagement: 'Manajemen Quotation',
+    leadDiscovery: 'Lead Discovery',
+    aiAssistant: 'AI Assistant',
+    dashboardTitle: 'Dashboard kerja harian',
+    dashboardDesc: 'Mulai hari dengan melihat overview company, prioritas follow up, dan pergerakan terbaru.',
+    leadsTitle: 'Lead database',
+    leadsDesc: 'Cari company dengan cepat, cek duplicate, dan buka workspace customer tanpa rasa seperti Excel.',
+    contactsTitle: 'Riwayat kontak',
+    contactsDesc: 'Update follow up dan pantau semua histori komunikasi dari satu tempat.',
+    quotationsTitle: 'Manajemen quotation',
+    quotationsDesc: 'Simpan semua penawaran yang pernah dikirim agar kamu tahu customer mana yang sudah pernah di-offer.',
+    discoveryTitle: 'Lead discovery',
+    discoveryDesc: 'Temukan prospect baru lalu blokir duplicate sebelum masuk ke database.',
+    assistantTitle: 'AI assistant',
+    assistantDesc: 'Buat draft email atau ringkasan dengan cepat dari data customer yang sudah ada.',
+    dashboardEasyScan: 'Dashboard yang lebih mudah discan',
+    dashboardEasyScanDesc: 'Informasi dipecah menjadi empat area: angka ringkas, market overview, fokus hari ini, dan movement terbaru.',
+    activityPeriod: 'Aktivitas periode ini',
+    activityPeriodDesc: 'Email, response, dan quotation di periode aktif',
+    newLeads: 'Lead baru',
+    newLeadsDesc: 'company baru yang masuk database',
+    responses: 'Respons',
+    responsesDesc: 'customer yang sudah memberi jawaban',
+    ordersWon: 'Order masuk',
+    ordersWonDesc: 'customer yang berhasil closing',
+    databaseOverview: 'Overview database',
+    databaseOverviewDesc: 'Negara, source, dan status',
+    leadsByCountry: 'Lead per negara',
+    leadsBySource: 'Lead per source',
+    statusPipeline: 'Status pipeline',
+    priorityCustomers: 'Prioritas customer',
+    priorityCustomersDesc: 'Customer yang perlu kamu lihat lebih dulu',
+    noPriorityCustomers: 'Belum ada customer prioritas.',
+    reminderSystem: 'Sistem reminder',
+    reminderSystemDesc: 'Due today, overdue, dan inactive',
+    noReminder: 'Tidak ada reminder saat ini.',
+    recentMovements: 'Pergerakan terbaru',
+    recentMovementsDesc: 'Apa yang terakhir berubah di database customer',
+    noActivity: 'Belum ada aktivitas tercatat.',
+    leadDatabaseFeels: 'Lead database yang terasa seperti app, bukan spreadsheet',
+    leadDatabaseFeelsDesc: 'Cari cepat, filter cepat, lalu buka workspace customer tanpa baca tabel terlalu lama.',
+    createNewCustomer: 'Buat customer baru',
+    createNewCustomerDesc: 'Form dibuat lebih ringkas agar cepat dipakai berulang kali',
+    companyName: 'Nama Company',
+    country: 'Negara',
+    city: 'Kota',
+    website: 'Website',
+    contactPerson: 'Contact Person',
+    email: 'Email',
+    phoneNumber: 'Nomor Telepon',
+    industryCategory: 'Kategori Industri',
+    sourceOfLead: 'Sumber Lead',
+    customerType: 'Tipe Customer',
+    status: 'Status',
+    notes: 'Catatan',
+    initialCustomerNote: 'Catatan awal customer',
+    saveCustomer: 'Simpan customer',
+    quickUxIdea: 'Ide UX cepat',
+    quickUxIdeaDesc: 'Yang bikin aplikasi terasa ringan',
+    searchAlwaysVisible: 'Search selalu terlihat',
+    fasterDuplicateCheck: 'lebih cepat cek duplicate',
+    leadRowAsCard: 'Lead row jadi card',
+    easierToScan: 'lebih mudah discan',
+    customerWorkspace: 'Workspace customer',
+    updateWithoutSwitching: 'update tanpa pindah-pindah',
+    customerWorkspaceTitle: 'Customer workspace',
+    customerWorkspaceDesc: 'Semua informasi customer penting dikumpulkan di area kerja yang lebih nyaman dilihat',
+    selectedCustomer: 'Customer terpilih',
+    source: 'Source',
+    lastContact: 'Kontak terakhir',
+    feedback: 'Feedback',
+    noWebsite: 'Belum ada website',
+    noContactPerson: 'Belum ada PIC',
+    noEmail: 'Belum ada email',
+    noPhoneNumber: 'Belum ada nomor telepon',
+    noNotes: 'Belum ada catatan',
+    updateStatus: 'Update status',
+    possibleDuplicateWith: 'Kemungkinan duplicate dengan',
+    contactTimeline: 'Timeline kontak',
+    latestActivity: 'Aktivitas terbaru',
+    quotationTimeline: 'Timeline quotation',
+    offersSentBefore: 'Offer yang pernah dikirim',
+    noContactHistoryYet: 'Belum ada histori kontak.',
+    noQuotationHistoryYet: 'Belum ada histori quotation.',
+    selectCustomerFromTable: 'Pilih customer dari daftar.',
+    updateFollowUpTitle: 'Update follow up',
+    updateFollowUpDesc: 'Setelah membuat customer, bagian ini yang paling sering kamu update',
+    lead: 'Lead',
+    selectCompany: 'Pilih company',
+    dateContacted: 'Tanggal kontak',
+    method: 'Metode',
+    followUpDate: 'Tanggal follow up',
+    subject: 'Subjek',
+    subjectPlaceholder: 'Follow up pertama / reminder quotation / hasil call',
+    messageSent: 'Pesan yang dikirim',
+    messageSentPlaceholder: 'Ringkasan singkat apa yang kamu kirim atau diskusikan',
+    responseStatus: 'Status respons',
+    saveUpdate: 'Simpan update',
+    quickControl: 'Kontrol cepat',
+    quickControlDesc: 'Indikator harian sederhana',
+    totalContactEntries: 'Total entry kontak',
+    allRecordedContactAttempts: 'semua percobaan kontak yang terekam',
+    responseRate: 'Rasio respons',
+    basedOnAllContactRecords: 'berdasarkan semua catatan kontak',
+    emailTouchpoints: 'Touchpoint email',
+    helpsTrackOfferedCustomers: 'membantu melacak customer yang sudah di-offer',
+    contactHistoryTitle: 'Riwayat kontak',
+    contactHistoryDesc: 'Semua update company dalam satu tempat',
+    date: 'Tanggal',
+    company: 'Company',
+    followUp: 'Follow Up',
+    noContactHistory: 'Belum ada histori kontak.',
+    quotationManagementTitle: 'Manajemen quotation',
+    quotationManagementDesc: 'Simpan histori quotation supaya kamu tahu customer mana yang sudah pernah di-offer',
+    quotationNumber: 'Nomor Quotation',
+    dateSent: 'Tanggal kirim',
+    productType: 'Tipe produk',
+    quotationValueUsd: 'Nilai quotation (USD)',
+    validityDate: 'Tanggal berlaku',
+    customerFeedback: 'Feedback customer',
+    customerFeedbackPlaceholder: 'Target harga / komentar buyer / status evaluasi',
+    saveQuotation: 'Simpan quotation',
+    quotationSnapshot: 'Snapshot quotation',
+    quotationSnapshotDesc: 'Overview sederhana',
+    totalQuotations: 'Total quotation',
+    allQuotationRecords: 'semua catatan quotation',
+    totalQuotedValue: 'Total nilai quotation',
+    forQuickControl: 'untuk kontrol cepat',
+    quotedCustomers: 'Customer yang di-quote',
+    alreadyReceivedQuotation: 'yang sudah menerima quotation',
+    quotationHistory: 'Riwayat quotation',
+    quotationHistoryDesc: 'Ketahui customer yang sudah mendapat penawaran',
+    quotation: 'Quotation',
+    product: 'Produk',
+    value: 'Nilai',
+    noFeedback: 'Belum ada feedback',
+    noQuotationsStored: 'Belum ada quotation tersimpan.',
+    leadDiscoveryTitle: 'Lead discovery',
+    leadDiscoveryDesc: 'Cari company baru dan blokir duplicate sebelum import',
+    discoverySearchPlaceholder: 'Negara, company, keyword',
+    industry: 'Industri',
+    alreadyExists: 'Sudah ada',
+    newProspect: 'Prospek baru',
+    noPic: 'Belum ada PIC',
+    addToCrm: 'Tambah ke CRM',
+    noDiscoveryCandidates: 'Tidak ada kandidat discovery yang cocok dengan filter saat ini.',
+    aiAssistantTitle: 'AI Assistant',
+    aiAssistantDesc: 'Buat teks sales cepat dari data company yang dipilih',
+    contentType: 'Tipe konten',
+    additionalContext: 'Konteks tambahan',
+    additionalContextPlaceholder: 'Fokus produk, catatan harga, hasil meeting, atau detail complaint',
+    generateDraft: 'Buat draft',
+    copyOutput: 'Salin output',
+    draftOutput: 'Hasil draft',
+    selectLead: 'Pilih lead',
+    content: 'Konten',
+    daily: 'Harian',
+    weekly: 'Mingguan',
+    monthly: 'Bulanan',
+  },
+  en: {
+    all: 'All',
+    exportWorkspace: 'Export workspace',
+    sidebarCopy: 'One place to check companies, quotation history, duplicate risk, and daily follow-up priorities.',
+    quickPulse: 'Quick pulse',
+    noUrgentReminder: 'No urgent reminders',
+    needsAttention: 'needs attention',
+    databaseSize: 'Database size',
+    countries: 'countries',
+    sources: 'sources',
+    language: 'Language',
+    search: 'Search',
+    searchGlobalPlaceholder: 'Search company / email / website',
+    newCustomer: '+ New Customer',
+    updateFollowUpShort: '+ Update Follow Up',
+    export: 'Export',
+    quickOverview: 'Quick overview',
+    heroTitle: 'The new UI focuses on faster scanning, faster updates, and stronger customer control than Excel.',
+    heroCopy:
+      'Important information is easier to read: company coverage, reminders, quotations, and customer history are gathered in one consistent workspace.',
+    reloadSample: 'Reload sample',
+    resetData: 'Reset data',
+    totalCompany: 'Total companies',
+    countryCoverage: 'country coverage',
+    dueFollowUp: 'Due follow-ups',
+    highPriority: 'high priority',
+    quotationSent: 'Quotations sent',
+    untouchedDiscovery: 'Untouched discovery',
+    potentialNewCustomer: 'potential new customer',
+    dashboard: 'Dashboard',
+    leadDatabase: 'Lead Database',
+    contactHistory: 'Contact History',
+    quotationManagement: 'Quotation Management',
+    leadDiscovery: 'Lead Discovery',
+    aiAssistant: 'AI Assistant',
+    dashboardTitle: 'Daily work dashboard',
+    dashboardDesc: 'Start the day with a company overview, follow-up priorities, and recent movements.',
+    leadsTitle: 'Lead database',
+    leadsDesc: 'Search companies quickly, check duplicates, and open the customer workspace without feeling like Excel.',
+    contactsTitle: 'Contact history',
+    contactsDesc: 'Update follow-ups and monitor all communication history from one place.',
+    quotationsTitle: 'Quotation management',
+    quotationsDesc: 'Store every quotation sent so you always know which customers were already offered.',
+    discoveryTitle: 'Lead discovery',
+    discoveryDesc: 'Find new prospects and block duplicates before adding them to the database.',
+    assistantTitle: 'AI assistant',
+    assistantDesc: 'Create quick drafts or summaries from existing customer data.',
+    dashboardEasyScan: 'A dashboard that is easier to scan',
+    dashboardEasyScanDesc: 'Information is split into four areas: summary numbers, market overview, today’s focus, and recent movement.',
+    activityPeriod: 'Activity in this period',
+    activityPeriodDesc: 'Emails, responses, and quotations in the active period',
+    newLeads: 'New leads',
+    newLeadsDesc: 'new companies added to the database',
+    responses: 'Responses',
+    responsesDesc: 'customers who have replied',
+    ordersWon: 'Orders won',
+    ordersWonDesc: 'customers successfully closed',
+    databaseOverview: 'Database overview',
+    databaseOverviewDesc: 'Countries, sources, and statuses',
+    leadsByCountry: 'Leads by country',
+    leadsBySource: 'Leads by source',
+    statusPipeline: 'Pipeline status',
+    priorityCustomers: 'Priority customers',
+    priorityCustomersDesc: 'Customers you should review first',
+    noPriorityCustomers: 'No priority customers yet.',
+    reminderSystem: 'Reminder system',
+    reminderSystemDesc: 'Due today, overdue, and inactive',
+    noReminder: 'No reminders at the moment.',
+    recentMovements: 'Recent movements',
+    recentMovementsDesc: 'What changed most recently in the customer database',
+    noActivity: 'No activity recorded yet.',
+    leadDatabaseFeels: 'A lead database that feels like an app, not a spreadsheet',
+    leadDatabaseFeelsDesc: 'Search quickly, filter quickly, then open the customer workspace without staring at tables too long.',
+    createNewCustomer: 'Create new customer',
+    createNewCustomerDesc: 'The form is more compact so it can be used repeatedly with less effort',
+    companyName: 'Company Name',
+    country: 'Country',
+    city: 'City',
+    website: 'Website',
+    contactPerson: 'Contact Person',
+    email: 'Email',
+    phoneNumber: 'Phone Number',
+    industryCategory: 'Industry Category',
+    sourceOfLead: 'Lead Source',
+    customerType: 'Customer Type',
+    status: 'Status',
+    notes: 'Notes',
+    initialCustomerNote: 'Initial customer note',
+    saveCustomer: 'Save customer',
+    quickUxIdea: 'Quick UX idea',
+    quickUxIdeaDesc: 'What keeps the app feeling light',
+    searchAlwaysVisible: 'Search always visible',
+    fasterDuplicateCheck: 'faster duplicate checking',
+    leadRowAsCard: 'Lead row becomes a card',
+    easierToScan: 'easier to scan',
+    customerWorkspace: 'Customer workspace',
+    updateWithoutSwitching: 'update without switching around',
+    customerWorkspaceTitle: 'Customer workspace',
+    customerWorkspaceDesc: 'All important customer information is collected in a workspace that is easier to review',
+    selectedCustomer: 'Selected customer',
+    source: 'Source',
+    lastContact: 'Last contact',
+    feedback: 'Feedback',
+    noWebsite: 'No website',
+    noContactPerson: 'No contact person',
+    noEmail: 'No email',
+    noPhoneNumber: 'No phone number',
+    noNotes: 'No notes',
+    updateStatus: 'Update status',
+    possibleDuplicateWith: 'Possible duplicate with',
+    contactTimeline: 'Contact timeline',
+    latestActivity: 'Latest activity',
+    quotationTimeline: 'Quotation timeline',
+    offersSentBefore: 'Offers sent before',
+    noContactHistoryYet: 'No contact history yet.',
+    noQuotationHistoryYet: 'No quotation history yet.',
+    selectCustomerFromTable: 'Select a customer from the list.',
+    updateFollowUpTitle: 'Update follow-up',
+    updateFollowUpDesc: 'After creating a customer, this is the section you will update most often',
+    lead: 'Lead',
+    selectCompany: 'Select company',
+    dateContacted: 'Date Contacted',
+    method: 'Method',
+    followUpDate: 'Follow-up Date',
+    subject: 'Subject',
+    subjectPlaceholder: 'First follow-up / quotation reminder / call result',
+    messageSent: 'Message Sent',
+    messageSentPlaceholder: 'A short summary of what you sent or discussed',
+    responseStatus: 'Response Status',
+    saveUpdate: 'Save update',
+    quickControl: 'Quick control',
+    quickControlDesc: 'Simple daily indicators',
+    totalContactEntries: 'Total contact entries',
+    allRecordedContactAttempts: 'all recorded contact attempts',
+    responseRate: 'Response rate',
+    basedOnAllContactRecords: 'based on all contact records',
+    emailTouchpoints: 'Email touchpoints',
+    helpsTrackOfferedCustomers: 'helps track offered customers',
+    contactHistoryTitle: 'Contact history',
+    contactHistoryDesc: 'All company updates in one place',
+    date: 'Date',
+    company: 'Company',
+    followUp: 'Follow-up',
+    noContactHistory: 'No contact history yet.',
+    quotationManagementTitle: 'Quotation management',
+    quotationManagementDesc: 'Store quotation history so you know which customer was already offered',
+    quotationNumber: 'Quotation Number',
+    dateSent: 'Date Sent',
+    productType: 'Product Type',
+    quotationValueUsd: 'Quotation Value (USD)',
+    validityDate: 'Validity Date',
+    customerFeedback: 'Customer Feedback',
+    customerFeedbackPlaceholder: 'Target price / buyer comment / evaluation status',
+    saveQuotation: 'Save quotation',
+    quotationSnapshot: 'Quotation snapshot',
+    quotationSnapshotDesc: 'Simple overview',
+    totalQuotations: 'Total quotations',
+    allQuotationRecords: 'all quotation records',
+    totalQuotedValue: 'Total quoted value',
+    forQuickControl: 'for quick control',
+    quotedCustomers: 'Quoted customers',
+    alreadyReceivedQuotation: 'who already received quotations',
+    quotationHistory: 'Quotation history',
+    quotationHistoryDesc: 'Know which customers already received an offer',
+    quotation: 'Quotation',
+    product: 'Product',
+    value: 'Value',
+    noFeedback: 'No feedback',
+    noQuotationsStored: 'No quotations stored yet.',
+    leadDiscoveryTitle: 'Lead discovery',
+    leadDiscoveryDesc: 'Search new companies and block duplicates before importing',
+    discoverySearchPlaceholder: 'Country, company, keyword',
+    industry: 'Industry',
+    alreadyExists: 'Already exists',
+    newProspect: 'New prospect',
+    noPic: 'No PIC',
+    addToCrm: 'Add to CRM',
+    noDiscoveryCandidates: 'No discovery candidates match the current filters.',
+    aiAssistantTitle: 'AI Assistant',
+    aiAssistantDesc: 'Generate quick sales text from selected company data',
+    contentType: 'Content Type',
+    additionalContext: 'Additional Context',
+    additionalContextPlaceholder: 'Product focus, pricing note, meeting result, or complaint detail',
+    generateDraft: 'Generate draft',
+    copyOutput: 'Copy output',
+    draftOutput: 'Draft output',
+    selectLead: 'Select lead',
+    content: 'Content',
+    daily: 'Daily',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+  },
+}
 
 const appRoot = document.querySelector<HTMLDivElement>('#app')
 if (!appRoot) throw new Error('App container was not found.')
@@ -150,6 +539,7 @@ document.title = 'CRM Export Marketing'
 
 const state: AppState = {
   data: loadData(),
+  uiLanguage: loadUiLanguage(),
   view: 'dashboard',
   timeframe: 'weekly',
   leadSearch: '',
@@ -169,9 +559,93 @@ const state: AppState = {
 
 state.activeLeadId = state.data.leads[0]?.id ?? null
 state.assistantLeadId = state.activeLeadId
+document.documentElement.lang = state.uiLanguage
 
 renderApp()
 bindEvents()
+
+function loadUiLanguage(): UiLanguage {
+  return localStorage.getItem(uiLanguageKey) === 'en' ? 'en' : 'id'
+}
+
+function persistUiLanguage(): void {
+  localStorage.setItem(uiLanguageKey, state.uiLanguage)
+  document.documentElement.lang = state.uiLanguage
+}
+
+function t(key: string): string {
+  return translations[state.uiLanguage][key] ?? key
+}
+
+function translateLeadStatus(status: LeadStatus): string {
+  if (state.uiLanguage === 'en') return status
+  const map: Record<LeadStatus, string> = {
+    'New Lead': 'Lead Baru',
+    Contacted: 'Sudah Dihubungi',
+    'Follow Up': 'Follow Up',
+    'Quotation Sent': 'Quotation Terkirim',
+    Negotiation: 'Negosiasi',
+    'Sample Stage': 'Tahap Sample',
+    'Awaiting Order': 'Menunggu Order',
+    'Order Received': 'Order Diterima',
+    'Lost Opportunity': 'Peluang Hilang',
+  }
+  return map[status]
+}
+
+function translateContactMethod(method: ContactMethod): string {
+  if (state.uiLanguage === 'en') return method
+  const map: Record<ContactMethod, string> = {
+    Email: 'Email',
+    LinkedIn: 'LinkedIn',
+    WhatsApp: 'WhatsApp',
+    Phone: 'Telepon',
+  }
+  return map[method]
+}
+
+function translateResponseStatus(status: ResponseStatus): string {
+  if (state.uiLanguage === 'en') return status
+  const map: Record<ResponseStatus, string> = {
+    Pending: 'Menunggu',
+    Responded: 'Merespons',
+    'No Response': 'Belum Merespons',
+    'Follow-up Required': 'Perlu Follow Up',
+  }
+  return map[status]
+}
+
+function translateAssistantType(type: AssistantType): string {
+  if (state.uiLanguage === 'en') return type
+  const map: Record<AssistantType, string> = {
+    'Introduction Email': 'Email Perkenalan',
+    'Follow-up Email': 'Email Follow Up',
+    'Quotation Email': 'Email Quotation',
+    'Complaint Response': 'Balasan Komplain',
+    'Meeting Summary': 'Ringkasan Meeting',
+  }
+  return map[type]
+}
+
+function translateCustomerType(type: string): string {
+  if (state.uiLanguage === 'en') return type
+  const map: Record<string, string> = {
+    Distributor: 'Distributor',
+    Importer: 'Importir',
+    Contractor: 'Kontraktor',
+    Stockist: 'Stockist',
+    'Industrial Supplier': 'Pemasok Industri',
+  }
+  return map[type] ?? type
+}
+
+function translateReminderSummary(reminder: Reminder): string {
+  if (state.uiLanguage === 'id') return reminder.summary
+  if (reminder.type === 'Follow Up') return `${reminder.leadName} has not replied since the first introduction.`
+  if (reminder.type === 'Overdue Follow Up') return `${reminder.leadName} is already past the scheduled follow-up date.`
+  if (reminder.type === 'Inactive') return `${reminder.leadName} has no activity for 30+ days.`
+  return reminder.summary
+}
 
 function loadData(): AppData {
   const stored = localStorage.getItem(storageKey)
@@ -405,8 +879,8 @@ function escapeHtml(value: string): string {
 }
 
 function formatDate(date: string): string {
-  if (!date) return 'Belum ada'
-  return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(date))
+  if (!date) return state.uiLanguage === 'id' ? 'Belum ada' : 'Not available'
+  return new Intl.DateTimeFormat(state.uiLanguage === 'id' ? 'id-ID' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(date))
 }
 
 function formatCurrency(value: number): string {
@@ -474,7 +948,7 @@ function getLastActivityDate(lead: Lead): string {
 }
 
 function getLastFeedback(lead: Lead): string {
-  return lead.quotations[0]?.customerFeedback || lead.contacts.find((item) => item.responseStatus === 'Responded')?.subject || 'Belum ada'
+  return lead.quotations[0]?.customerFeedback || lead.contacts.find((item) => item.responseStatus === 'Responded')?.subject || (state.uiLanguage === 'id' ? 'Belum ada' : 'No feedback yet')
 }
 
 function findDuplicateLead(companyName: string, website: string, email: string, excludeId?: string): Lead | undefined {
@@ -627,28 +1101,28 @@ function getFilteredDiscovery(): Array<DiscoveryLead & { duplicate?: Lead }> {
 function getViewMeta(view: ViewKey): { title: string; description: string } {
   const map: Record<ViewKey, { title: string; description: string }> = {
     dashboard: {
-      title: 'Dashboard kerja harian',
-      description: 'Mulai hari dengan melihat overview company, prioritas follow up, dan pergerakan terbaru.',
+      title: t('dashboardTitle'),
+      description: t('dashboardDesc'),
     },
     leads: {
-      title: 'Lead database',
-      description: 'Cari company dengan cepat, cek duplicate, dan buka workspace customer tanpa rasa seperti Excel.',
+      title: t('leadsTitle'),
+      description: t('leadsDesc'),
     },
     contacts: {
-      title: 'Contact history',
-      description: 'Update follow up dan pantau semua histori komunikasi dari satu tempat.',
+      title: t('contactsTitle'),
+      description: t('contactsDesc'),
     },
     quotations: {
-      title: 'Quotation management',
-      description: 'Simpan semua penawaran yang pernah dikirim agar kamu tahu customer mana yang sudah pernah di-offer.',
+      title: t('quotationsTitle'),
+      description: t('quotationsDesc'),
     },
     discovery: {
-      title: 'Lead discovery',
-      description: 'Temukan prospect baru lalu blokir duplicate sebelum masuk ke database.',
+      title: t('discoveryTitle'),
+      description: t('discoveryDesc'),
     },
     assistant: {
-      title: 'AI assistant',
-      description: 'Buat draft email atau ringkasan dengan cepat dari data customer yang sudah ada.',
+      title: t('assistantTitle'),
+      description: t('assistantDesc'),
     },
   }
   return map[view]
@@ -695,21 +1169,21 @@ function renderApp(): void {
         <div class="sidebar-head">
           <div class="brand-mark">CE</div>
           <div>
-            <p class="eyebrow">Export workspace</p>
+            <p class="eyebrow">${t('exportWorkspace')}</p>
             <h1>CRM Export Marketing</h1>
           </div>
         </div>
-        <p class="sidebar-copy">Satu tempat untuk cek company, histori penawaran, duplicate risk, dan prioritas follow up harian.</p>
+        <p class="sidebar-copy">${t('sidebarCopy')}</p>
         <nav class="nav-stack">${renderTabs()}</nav>
         <section class="sidebar-card">
-          <span>Quick pulse</span>
+          <span>${t('quickPulse')}</span>
           <strong>${reminders.length}</strong>
-          <small>${topReminder ? escapeHtml(topReminder.leadName) + ' perlu perhatian' : 'Tidak ada reminder mendesak'}</small>
+          <small>${topReminder ? `${escapeHtml(topReminder.leadName)} ${t('needsAttention')}` : t('noUrgentReminder')}</small>
         </section>
         <section class="sidebar-card">
-          <span>Database size</span>
+          <span>${t('databaseSize')}</span>
           <strong>${state.data.leads.length}</strong>
-          <small>${Object.keys(getCountryCounts(state.data.leads)).length} negara • ${Object.keys(getSourceCounts(state.data.leads)).length} source</small>
+          <small>${Object.keys(getCountryCounts(state.data.leads)).length} ${t('countries')} • ${Object.keys(getSourceCounts(state.data.leads)).length} ${t('sources')}</small>
         </section>
       </aside>
 
@@ -721,34 +1195,39 @@ function renderApp(): void {
           </div>
           <div class="topbar-actions">
             <label class="topbar-search">
-              <span>Search</span>
-              <input id="global-search" type="search" value="${escapeHtml(state.leadSearch)}" placeholder="Search company / email / website" />
+              <span>${t('search')}</span>
+              <input id="global-search" type="search" value="${escapeHtml(state.leadSearch)}" placeholder="${t('searchGlobalPlaceholder')}" />
             </label>
-            <button class="btn btn-primary" data-view="leads">+ New Customer</button>
-            <button class="btn" data-view="contacts">+ Update Follow Up</button>
-            <button class="btn" data-action="export-excel">Export</button>
+            <label class="language-switch">
+              <span>${t('language')}</span>
+              <select id="language-switch">
+                <option value="id" ${state.uiLanguage === 'id' ? 'selected' : ''}>ID</option>
+                <option value="en" ${state.uiLanguage === 'en' ? 'selected' : ''}>EN</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" data-view="leads">${t('newCustomer')}</button>
+            <button class="btn" data-view="contacts">${t('updateFollowUpShort')}</button>
+            <button class="btn" data-action="export-excel">${t('export')}</button>
           </div>
         </header>
 
         <section class="hero-band">
           <div class="hero-intro">
-            <p class="eyebrow">Overview cepat</p>
-            <h3>UI baru difokuskan untuk scan cepat, update cepat, dan kontrol customer lebih kuat dari Excel.</h3>
-            <p class="hero-copy">
-              Semua informasi penting dibuat lebih mudah dibaca: company coverage, reminder, quotation, dan histori customer dalam satu workspace yang konsisten.
-            </p>
+            <p class="eyebrow">${t('quickOverview')}</p>
+            <h3>${t('heroTitle')}</h3>
+            <p class="hero-copy">${t('heroCopy')}</p>
           </div>
           <div class="hero-actions">
-            <button class="btn" data-action="load-sample">Reload sample</button>
-            <button class="btn btn-danger" data-action="reset-data">Reset data</button>
+            <button class="btn" data-action="load-sample">${t('reloadSample')}</button>
+            <button class="btn btn-danger" data-action="reset-data">${t('resetData')}</button>
           </div>
         </section>
 
         <section class="hero-metrics">
-          <article class="highlight-card accent-blue"><span>Total company</span><strong>${state.data.leads.length}</strong><small>${Object.keys(getCountryCounts(state.data.leads)).length} country coverage</small></article>
-          <article class="highlight-card accent-orange"><span>Due follow up</span><strong>${reminders.length}</strong><small>${reminders.filter((item) => item.priority === 'high').length} high priority</small></article>
-          <article class="highlight-card accent-violet"><span>Quotation sent</span><strong>${flattenQuotations(state.data.leads).length}</strong><small>${formatCurrency(flattenQuotations(state.data.leads).reduce((sum, item) => sum + item.quotationValue, 0))}</small></article>
-          <article class="highlight-card accent-green"><span>Untouched discovery</span><strong>${getFilteredDiscovery().filter((item) => !item.duplicate).length}</strong><small>potential new customer</small></article>
+          <article class="highlight-card accent-blue"><span>${t('totalCompany')}</span><strong>${state.data.leads.length}</strong><small>${Object.keys(getCountryCounts(state.data.leads)).length} ${t('countryCoverage')}</small></article>
+          <article class="highlight-card accent-orange"><span>${t('dueFollowUp')}</span><strong>${reminders.length}</strong><small>${reminders.filter((item) => item.priority === 'high').length} ${t('highPriority')}</small></article>
+          <article class="highlight-card accent-violet"><span>${t('quotationSent')}</span><strong>${flattenQuotations(state.data.leads).length}</strong><small>${formatCurrency(flattenQuotations(state.data.leads).reduce((sum, item) => sum + item.quotationValue, 0))}</small></article>
+          <article class="highlight-card accent-green"><span>${t('untouchedDiscovery')}</span><strong>${getFilteredDiscovery().filter((item) => !item.duplicate).length}</strong><small>${t('potentialNewCustomer')}</small></article>
         </section>
 
         ${
@@ -782,12 +1261,12 @@ function renderApp(): void {
 
 function renderTabs(): string {
   const tabs: Array<{ key: ViewKey; label: string }> = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'leads', label: 'Lead Database' },
-    { key: 'contacts', label: 'Contact History' },
-    { key: 'quotations', label: 'Quotation Management' },
-    { key: 'discovery', label: 'Lead Discovery' },
-    { key: 'assistant', label: 'AI Assistant' },
+    { key: 'dashboard', label: t('dashboard') },
+    { key: 'leads', label: t('leadDatabase') },
+    { key: 'contacts', label: t('contactHistory') },
+    { key: 'quotations', label: t('quotationManagement') },
+    { key: 'discovery', label: t('leadDiscovery') },
+    { key: 'assistant', label: t('aiAssistant') },
   ]
   return tabs
     .map(
@@ -811,51 +1290,51 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
     <section class="section-stack">
       <div class="section-head">
         <div>
-          <h2>Dashboard yang lebih mudah discan</h2>
-          <p>Informasi dipecah menjadi empat area: angka ringkas, market overview, fokus hari ini, dan movement terbaru.</p>
+          <h2>${t('dashboardEasyScan')}</h2>
+          <p>${t('dashboardEasyScanDesc')}</p>
         </div>
         <div class="segment-control">
-          <button data-timeframe="daily" class="${state.timeframe === 'daily' ? 'active' : ''}">Daily</button>
-          <button data-timeframe="weekly" class="${state.timeframe === 'weekly' ? 'active' : ''}">Weekly</button>
-          <button data-timeframe="monthly" class="${state.timeframe === 'monthly' ? 'active' : ''}">Monthly</button>
+          <button data-timeframe="daily" class="${state.timeframe === 'daily' ? 'active' : ''}">${t('daily')}</button>
+          <button data-timeframe="weekly" class="${state.timeframe === 'weekly' ? 'active' : ''}">${t('weekly')}</button>
+          <button data-timeframe="monthly" class="${state.timeframe === 'monthly' ? 'active' : ''}">${t('monthly')}</button>
         </div>
       </div>
 
       <div class="focus-grid">
         <article class="metric-card featured-metric">
-          <span>Aktivitas periode ini</span>
+          <span>${t('activityPeriod')}</span>
           <strong>${metrics.emailsSent + metrics.responsesReceived + metrics.quotationsSent}</strong>
-          <small>Email, response, dan quotation di periode aktif</small>
+          <small>${t('activityPeriodDesc')}</small>
         </article>
-        <article class="metric-card"><span>New leads</span><strong>${metrics.newLeads}</strong><small>company baru yang masuk database</small></article>
-        <article class="metric-card"><span>Responses</span><strong>${metrics.responsesReceived}</strong><small>customer yang sudah memberi jawaban</small></article>
-        <article class="metric-card"><span>Orders won</span><strong>${metrics.ordersWon}</strong><small>customer yang berhasil closing</small></article>
+        <article class="metric-card"><span>${t('newLeads')}</span><strong>${metrics.newLeads}</strong><small>${t('newLeadsDesc')}</small></article>
+        <article class="metric-card"><span>${t('responses')}</span><strong>${metrics.responsesReceived}</strong><small>${t('responsesDesc')}</small></article>
+        <article class="metric-card"><span>${t('ordersWon')}</span><strong>${metrics.ordersWon}</strong><small>${t('ordersWonDesc')}</small></article>
       </div>
 
       <div class="dashboard-grid redesigned-grid">
         <article class="panel market-panel">
-          <div class="panel-head"><h3>Database overview</h3><span>Negara, source, dan status</span></div>
+          <div class="panel-head"><h3>${t('databaseOverview')}</h3><span>${t('databaseOverviewDesc')}</span></div>
           <div class="overview-split">
             <div class="stack-list">
-              <h4>Leads by country</h4>
+              <h4>${t('leadsByCountry')}</h4>
               ${countryCounts.map(([country, count]) => `<div class="row-line"><span>${escapeHtml(country)}</span><strong>${count}</strong></div>`).join('')}
             </div>
             <div class="stack-list">
-              <h4>Leads by source</h4>
+              <h4>${t('leadsBySource')}</h4>
               ${sourceCounts.map(([source, count]) => `<div class="row-line"><span>${escapeHtml(source)}</span><strong>${count}</strong></div>`).join('')}
             </div>
             <div class="stack-list">
-              <h4>Status pipeline</h4>
+              <h4>${t('statusPipeline')}</h4>
               ${pipelineCounts
                 .filter((item) => item.count > 0)
-                .map((item) => `<div class="row-line"><span>${escapeHtml(item.status)}</span><strong>${item.count}</strong></div>`)
+                .map((item) => `<div class="row-line"><span>${escapeHtml(translateLeadStatus(item.status))}</span><strong>${item.count}</strong></div>`)
                 .join('')}
             </div>
           </div>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h3>Prioritas customer</h3><span>Customer yang perlu kamu lihat lebih dulu</span></div>
+          <div class="panel-head"><h3>${t('priorityCustomers')}</h3><span>${t('priorityCustomersDesc')}</span></div>
           <div class="priority-list">
             ${
               priorityLeads.length
@@ -867,18 +1346,18 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
                             <strong>${escapeHtml(lead.companyName)}</strong>
                             <p>${escapeHtml(lead.country)} • ${escapeHtml(lead.sourceOfLead)}</p>
                           </div>
-                          <span class="status-pill">${escapeHtml(lead.status)}</span>
+                          <span class="status-pill">${escapeHtml(translateLeadStatus(lead.status))}</span>
                         </button>
                       `,
                     )
                     .join('')
-                : '<p class="empty">Belum ada customer prioritas.</p>'
+                : `<p class="empty">${t('noPriorityCustomers')}</p>`
             }
           </div>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h3>Reminder system</h3><span>Due today, overdue, dan inactive</span></div>
+          <div class="panel-head"><h3>${t('reminderSystem')}</h3><span>${t('reminderSystemDesc')}</span></div>
           <div class="stack-list">
             ${
               reminders.length
@@ -889,20 +1368,20 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
                         <button class="reminder-card priority-${reminder.priority}" data-action="select-lead" data-id="${reminder.leadId}">
                           <div>
                             <strong>${escapeHtml(reminder.leadName)}</strong>
-                            <p>${escapeHtml(reminder.summary)}</p>
+                            <p>${escapeHtml(translateReminderSummary(reminder))}</p>
                           </div>
                           <small>${formatDate(reminder.dueDate)}</small>
                         </button>
                       `,
                     )
                     .join('')
-                : '<p class="empty">No reminder at the moment.</p>'
+                : `<p class="empty">${t('noReminder')}</p>`
             }
           </div>
         </article>
 
         <article class="panel full-span">
-          <div class="panel-head"><h3>Recent movements</h3><span>Apa yang terakhir berubah di database customer</span></div>
+          <div class="panel-head"><h3>${t('recentMovements')}</h3><span>${t('recentMovementsDesc')}</span></div>
           <div class="activity-list">
             ${
               recent.length
@@ -919,7 +1398,7 @@ function renderDashboard(metrics: ReturnType<typeof getWindowMetrics>, reminders
                       `,
                     )
                     .join('')
-                : '<p class="empty">No activity recorded yet.</p>'
+                : `<p class="empty">${t('noActivity')}</p>`
             }
           </div>
         </article>
@@ -936,18 +1415,18 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
         <article class="panel database-panel">
           <div class="panel-head">
             <div>
-              <h2>Lead database yang terasa seperti app, bukan spreadsheet</h2>
-              <span>Cari cepat, filter cepat, lalu buka workspace customer tanpa baca tabel terlalu lama.</span>
+              <h2>${t('leadDatabaseFeels')}</h2>
+              <span>${t('leadDatabaseFeelsDesc')}</span>
             </div>
-            <button class="btn btn-primary" data-action="focus-create">+ New Customer</button>
+            <button class="btn btn-primary" data-action="focus-create">${t('newCustomer')}</button>
           </div>
           <div class="filter-grid redesigned-filter">
-            <label><span>Search</span><input id="lead-search" type="search" value="${escapeHtml(state.leadSearch)}" placeholder="Company, country, contact, website" /></label>
-            <label><span>Country</span><select id="country-filter">${countries
-              .map((country) => `<option value="${escapeHtml(country)}" ${state.countryFilter === country ? 'selected' : ''}>${escapeHtml(country)}</option>`)
+            <label><span>${t('search')}</span><input id="lead-search" type="search" value="${escapeHtml(state.leadSearch)}" placeholder="Company, country, contact, website" /></label>
+            <label><span>${t('country')}</span><select id="country-filter">${countries
+              .map((country) => `<option value="${escapeHtml(country)}" ${state.countryFilter === country ? 'selected' : ''}>${escapeHtml(country === 'All' ? t('all') : country)}</option>`)
               .join('')}</select></label>
-            <label><span>Status</span><select id="status-filter"><option value="All">All</option>${pipelineStatuses
-              .map((status) => `<option value="${escapeHtml(status)}" ${state.statusFilter === status ? 'selected' : ''}>${escapeHtml(status)}</option>`)
+            <label><span>${t('status')}</span><select id="status-filter"><option value="All">${t('all')}</option>${pipelineStatuses
+              .map((status) => `<option value="${escapeHtml(status)}" ${state.statusFilter === status ? 'selected' : ''}>${escapeHtml(translateLeadStatus(status))}</option>`)
               .join('')}</select></label>
           </div>
           <div class="lead-table">
@@ -962,52 +1441,52 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
                             <p>${escapeHtml(lead.country)} • ${escapeHtml(lead.sourceOfLead)} • ${escapeHtml(lead.industryCategory)}</p>
                           </div>
                           <div class="lead-meta">
-                            <span class="status-pill">${escapeHtml(lead.status)}</span>
-                            <small>Last contact ${formatDate(getLastActivityDate(lead))}</small>
+                            <span class="status-pill">${escapeHtml(translateLeadStatus(lead.status))}</span>
+                            <small>${t('lastContact')} ${formatDate(getLastActivityDate(lead))}</small>
                             <small>${escapeHtml(getLastFeedback(lead))}</small>
                           </div>
                         </button>
                       `,
                     )
                     .join('')
-                : '<div class="empty">No leads match the current filter.</div>'
+                : `<div class="empty">${state.uiLanguage === 'id' ? 'Tidak ada lead yang cocok dengan filter saat ini.' : 'No leads match the current filter.'}</div>`
             }
           </div>
         </article>
 
         <aside class="workspace-side">
           <article class="panel create-panel" id="create-customer-panel">
-            <div class="panel-head"><h2>Create new customer</h2><span>Form dibuat lebih ringkas agar cepat dipakai berulang kali</span></div>
+            <div class="panel-head"><h2>${t('createNewCustomer')}</h2><span>${t('createNewCustomerDesc')}</span></div>
             <form id="lead-form" class="form-grid">
-              <label><span>Company Name</span><input name="companyName" required /></label>
-              <label><span>Country</span><input name="country" required /></label>
-              <label><span>City</span><input name="city" /></label>
-              <label><span>Website</span><input name="website" type="url" /></label>
-              <label><span>Contact Person</span><input name="contactPerson" /></label>
-              <label><span>Email</span><input name="email" type="email" /></label>
-              <label><span>Phone Number</span><input name="phoneNumber" /></label>
-              <label><span>Industry Category</span><input name="industryCategory" required /></label>
-              <label><span>Source of Lead</span><input name="sourceOfLead" required /></label>
-              <label><span>Customer Type</span><select name="customerType"><option>Distributor</option><option>Importer</option><option>Contractor</option><option>Stockist</option><option>Industrial Supplier</option></select></label>
-              <label><span>Status</span><select name="status">${pipelineStatuses.map((status) => `<option value="${status}">${status}</option>`).join('')}</select></label>
-              <label class="wide"><span>Notes</span><textarea name="notes" rows="3" placeholder="Initial customer note"></textarea></label>
-              <div class="form-actions wide"><button class="btn btn-primary" type="submit">Save customer</button></div>
+              <label><span>${t('companyName')}</span><input name="companyName" required /></label>
+              <label><span>${t('country')}</span><input name="country" required /></label>
+              <label><span>${t('city')}</span><input name="city" /></label>
+              <label><span>${t('website')}</span><input name="website" type="url" /></label>
+              <label><span>${t('contactPerson')}</span><input name="contactPerson" /></label>
+              <label><span>${t('email')}</span><input name="email" type="email" /></label>
+              <label><span>${t('phoneNumber')}</span><input name="phoneNumber" /></label>
+              <label><span>${t('industryCategory')}</span><input name="industryCategory" required /></label>
+              <label><span>${t('sourceOfLead')}</span><input name="sourceOfLead" required /></label>
+              <label><span>${t('customerType')}</span><select name="customerType"><option>Distributor</option><option>Importer</option><option>Contractor</option><option>Stockist</option><option>Industrial Supplier</option></select></label>
+              <label><span>${t('status')}</span><select name="status">${pipelineStatuses.map((status) => `<option value="${status}">${translateLeadStatus(status)}</option>`).join('')}</select></label>
+              <label class="wide"><span>${t('notes')}</span><textarea name="notes" rows="3" placeholder="${t('initialCustomerNote')}"></textarea></label>
+              <div class="form-actions wide"><button class="btn btn-primary" type="submit">${t('saveCustomer')}</button></div>
             </form>
           </article>
 
           <article class="panel quick-tip-panel">
-            <div class="panel-head"><h3>Quick UX idea</h3><span>Yang bikin aplikasi terasa ringan</span></div>
+            <div class="panel-head"><h3>${t('quickUxIdea')}</h3><span>${t('quickUxIdeaDesc')}</span></div>
             <div class="stack-list">
-              <div class="row-line"><span>Search selalu terlihat</span><strong>lebih cepat cek duplicate</strong></div>
-              <div class="row-line"><span>Lead row jadi card</span><strong>lebih mudah discan</strong></div>
-              <div class="row-line"><span>Workspace customer</span><strong>update tanpa pindah-pindah</strong></div>
+              <div class="row-line"><span>${t('searchAlwaysVisible')}</span><strong>${t('fasterDuplicateCheck')}</strong></div>
+              <div class="row-line"><span>${t('leadRowAsCard')}</span><strong>${t('easierToScan')}</strong></div>
+              <div class="row-line"><span>${t('customerWorkspace')}</span><strong>${t('updateWithoutSwitching')}</strong></div>
             </div>
           </article>
         </aside>
       </div>
 
       <article class="panel workspace-panel">
-        <div class="panel-head"><h2>Customer workspace</h2><span>Semua informasi customer penting dikumpulkan di area kerja yang lebih nyaman dilihat</span></div>
+        <div class="panel-head"><h2>${t('customerWorkspaceTitle')}</h2><span>${t('customerWorkspaceDesc')}</span></div>
         ${
           activeLead
             ? `
@@ -1015,36 +1494,36 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
                 <div class="workspace-profile">
                   <div class="workspace-hero">
                     <div>
-                      <p class="eyebrow">Selected customer</p>
+                      <p class="eyebrow">${t('selectedCustomer')}</p>
                       <h3>${escapeHtml(activeLead.companyName)}</h3>
-                      <p>${escapeHtml(activeLead.country)} • ${escapeHtml(activeLead.city)} • ${escapeHtml(activeLead.customerType)}</p>
+                      <p>${escapeHtml(activeLead.country)} • ${escapeHtml(activeLead.city)} • ${escapeHtml(translateCustomerType(activeLead.customerType))}</p>
                     </div>
-                    <span class="status-pill">${escapeHtml(activeLead.status)}</span>
+                    <span class="status-pill">${escapeHtml(translateLeadStatus(activeLead.status))}</span>
                   </div>
                   <div class="info-pills">
-                    <div class="info-pill"><strong>Source</strong><span>${escapeHtml(activeLead.sourceOfLead)}</span></div>
-                    <div class="info-pill"><strong>Last contact</strong><span>${formatDate(getLastActivityDate(activeLead))}</span></div>
-                    <div class="info-pill"><strong>Feedback</strong><span>${escapeHtml(getLastFeedback(activeLead))}</span></div>
+                    <div class="info-pill"><strong>${t('source')}</strong><span>${escapeHtml(activeLead.sourceOfLead)}</span></div>
+                    <div class="info-pill"><strong>${t('lastContact')}</strong><span>${formatDate(getLastActivityDate(activeLead))}</span></div>
+                    <div class="info-pill"><strong>${t('feedback')}</strong><span>${escapeHtml(getLastFeedback(activeLead))}</span></div>
                   </div>
                   <div class="workspace-contact">
-                    <p>${activeLead.website ? `<a href="${escapeHtml(activeLead.website)}" target="_blank">${escapeHtml(activeLead.website)}</a>` : 'No website'}</p>
-                    <p>${escapeHtml(activeLead.contactPerson || 'No contact person')} • ${escapeHtml(activeLead.email || 'No email')}</p>
-                    <p>${escapeHtml(activeLead.phoneNumber || 'No phone number')}</p>
+                    <p>${activeLead.website ? `<a href="${escapeHtml(activeLead.website)}" target="_blank">${escapeHtml(activeLead.website)}</a>` : t('noWebsite')}</p>
+                    <p>${escapeHtml(activeLead.contactPerson || t('noContactPerson'))} • ${escapeHtml(activeLead.email || t('noEmail'))}</p>
+                    <p>${escapeHtml(activeLead.phoneNumber || t('noPhoneNumber'))}</p>
                   </div>
-                  <div class="notes-box">${escapeHtml(activeLead.notes || 'No notes')}</div>
-                  <label class="inline-select status-select-row"><span>Update status</span><select data-role="lead-status" data-id="${activeLead.id}">${pipelineStatuses
-                    .map((status) => `<option value="${status}" ${status === activeLead.status ? 'selected' : ''}>${status}</option>`)
+                  <div class="notes-box">${escapeHtml(activeLead.notes || t('noNotes'))}</div>
+                  <label class="inline-select status-select-row"><span>${t('updateStatus')}</span><select data-role="lead-status" data-id="${activeLead.id}">${pipelineStatuses
+                    .map((status) => `<option value="${status}" ${status === activeLead.status ? 'selected' : ''}>${translateLeadStatus(status)}</option>`)
                     .join('')}</select></label>
                   ${
                     duplicate
-                      ? `<div class="warning-box">Possible duplicate with ${escapeHtml(duplicate.companyName)} • last contact ${formatDate(getLastActivityDate(duplicate))} • status ${escapeHtml(duplicate.status)}</div>`
+                      ? `<div class="warning-box">${t('possibleDuplicateWith')} ${escapeHtml(duplicate.companyName)} • ${t('lastContact').toLowerCase()} ${formatDate(getLastActivityDate(duplicate))} • ${t('status').toLowerCase()} ${escapeHtml(translateLeadStatus(duplicate.status))}</div>`
                       : ''
                   }
                 </div>
 
                 <div class="workspace-columns">
                   <div class="detail-card timeline-card">
-                    <div class="panel-head compact-head"><h3>Contact timeline</h3><span>Activity terbaru</span></div>
+                    <div class="panel-head compact-head"><h3>${t('contactTimeline')}</h3><span>${t('latestActivity')}</span></div>
                     ${
                       activeLead.contacts.length
                         ? activeLead.contacts
@@ -1054,21 +1533,21 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
                               (contact) => `
                                 <div class="timeline-item">
                                   <div class="timeline-head">
-                                    <strong>${escapeHtml(contact.method)}</strong>
+                                    <strong>${escapeHtml(translateContactMethod(contact.method))}</strong>
                                     <span>${formatDate(contact.dateContacted)}</span>
                                   </div>
                                   <p>${escapeHtml(contact.subject)}</p>
-                                  <small>${escapeHtml(contact.responseStatus)}${contact.followUpDate ? ` • Follow up ${formatDate(contact.followUpDate)}` : ''}</small>
+                                  <small>${escapeHtml(translateResponseStatus(contact.responseStatus))}${contact.followUpDate ? ` • ${t('followUp')} ${formatDate(contact.followUpDate)}` : ''}</small>
                                 </div>
                               `,
                             )
                             .join('')
-                        : '<p class="empty">No contact history yet.</p>'
+                        : `<p class="empty">${t('noContactHistoryYet')}</p>`
                     }
                   </div>
 
                   <div class="detail-card timeline-card">
-                    <div class="panel-head compact-head"><h3>Quotation timeline</h3><span>Offer yang pernah dikirim</span></div>
+                    <div class="panel-head compact-head"><h3>${t('quotationTimeline')}</h3><span>${t('offersSentBefore')}</span></div>
                     ${
                       activeLead.quotations.length
                         ? activeLead.quotations
@@ -1082,18 +1561,18 @@ function renderLeadDatabase(filteredLeads: Lead[], activeLead: Lead | undefined,
                                     <span>${formatDate(quotation.dateSent)}</span>
                                   </div>
                                   <p>${escapeHtml(quotation.productType)} • ${formatCurrency(quotation.quotationValue)}</p>
-                                  <small>Valid ${formatDate(quotation.validityDate)} • ${escapeHtml(quotation.customerFeedback || 'No feedback')}</small>
+                                  <small>${t('validityDate')} ${formatDate(quotation.validityDate)} • ${escapeHtml(quotation.customerFeedback || t('noFeedback'))}</small>
                                 </div>
                               `,
                             )
                             .join('')
-                        : '<p class="empty">No quotation history yet.</p>'
+                        : `<p class="empty">${t('noQuotationHistoryYet')}</p>`
                     }
                   </div>
                 </div>
               </div>
             `
-            : '<p class="empty">Select a customer from the table.</p>'
+            : `<p class="empty">${t('selectCustomerFromTable')}</p>`
         }
       </article>
     </section>
@@ -1106,43 +1585,43 @@ function renderContacts(activeLead: Lead | undefined): string {
     <section class="section-stack">
       <div class="two-column">
         <article class="panel">
-          <div class="panel-head"><h2>Update follow up</h2><span>After creating customer, mostly you only update this section</span></div>
+          <div class="panel-head"><h2>${t('updateFollowUpTitle')}</h2><span>${t('updateFollowUpDesc')}</span></div>
           <form id="contact-form" class="form-grid">
-            <label><span>Lead</span><select name="leadId" required><option value="">Select company</option>${state.data.leads
+            <label><span>${t('lead')}</span><select name="leadId" required><option value="">${t('selectCompany')}</option>${state.data.leads
               .map((lead) => `<option value="${lead.id}" ${activeLead?.id === lead.id ? 'selected' : ''}>${escapeHtml(lead.companyName)} • ${escapeHtml(lead.country)}</option>`)
               .join('')}</select></label>
-            <label><span>Date Contacted</span><input name="dateContacted" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></label>
-            <label><span>Method</span><select name="method">${contactMethods.map((method) => `<option value="${method}">${method}</option>`).join('')}</select></label>
-            <label><span>Follow-up Date</span><input name="followUpDate" type="date" /></label>
-            <label class="wide"><span>Subject</span><input name="subject" required placeholder="First follow up / quotation reminder / call result" /></label>
-            <label class="wide"><span>Message Sent</span><textarea name="messageSent" rows="4" placeholder="Short summary of what you sent or discussed"></textarea></label>
-            <label><span>Response Status</span><select name="responseStatus">${responseStatuses.map((item) => `<option value="${item}">${item}</option>`).join('')}</select></label>
-            <div class="form-actions wide"><button class="btn btn-primary" type="submit">Save update</button></div>
+            <label><span>${t('dateContacted')}</span><input name="dateContacted" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></label>
+            <label><span>${t('method')}</span><select name="method">${contactMethods.map((method) => `<option value="${method}">${translateContactMethod(method)}</option>`).join('')}</select></label>
+            <label><span>${t('followUpDate')}</span><input name="followUpDate" type="date" /></label>
+            <label class="wide"><span>${t('subject')}</span><input name="subject" required placeholder="${t('subjectPlaceholder')}" /></label>
+            <label class="wide"><span>${t('messageSent')}</span><textarea name="messageSent" rows="4" placeholder="${t('messageSentPlaceholder')}"></textarea></label>
+            <label><span>${t('responseStatus')}</span><select name="responseStatus">${responseStatuses.map((item) => `<option value="${item}">${translateResponseStatus(item)}</option>`).join('')}</select></label>
+            <div class="form-actions wide"><button class="btn btn-primary" type="submit">${t('saveUpdate')}</button></div>
           </form>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h2>Quick control</h2><span>Simple daily indicators</span></div>
+          <div class="panel-head"><h2>${t('quickControl')}</h2><span>${t('quickControlDesc')}</span></div>
           <div class="stack-list">
-            <div class="summary-card"><strong>Total contact entries</strong><p>${allContacts.length}</p><small>all recorded contact attempts</small></div>
-            <div class="summary-card"><strong>Response rate</strong><p>${allContacts.length ? Math.round((allContacts.filter((item) => item.responseStatus === 'Responded').length / allContacts.length) * 100) : 0}%</p><small>based on all contact records</small></div>
-            <div class="summary-card"><strong>Email touchpoints</strong><p>${allContacts.filter((item) => item.method === 'Email').length}</p><small>helps track your offered customers</small></div>
+            <div class="summary-card"><strong>${t('totalContactEntries')}</strong><p>${allContacts.length}</p><small>${t('allRecordedContactAttempts')}</small></div>
+            <div class="summary-card"><strong>${t('responseRate')}</strong><p>${allContacts.length ? Math.round((allContacts.filter((item) => item.responseStatus === 'Responded').length / allContacts.length) * 100) : 0}%</p><small>${t('basedOnAllContactRecords')}</small></div>
+            <div class="summary-card"><strong>${t('emailTouchpoints')}</strong><p>${allContacts.filter((item) => item.method === 'Email').length}</p><small>${t('helpsTrackOfferedCustomers')}</small></div>
           </div>
         </article>
       </div>
 
       <article class="panel">
-        <div class="panel-head"><h2>Contact history</h2><span>All company updates in one place</span></div>
+        <div class="panel-head"><h2>${t('contactHistoryTitle')}</h2><span>${t('contactHistoryDesc')}</span></div>
         <div class="table-shell">
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Company</th>
-                <th>Method</th>
-                <th>Subject</th>
-                <th>Follow Up</th>
-                <th>Status</th>
+                <th>${t('date')}</th>
+                <th>${t('company')}</th>
+                <th>${t('method')}</th>
+                <th>${t('subject')}</th>
+                <th>${t('followUp')}</th>
+                <th>${t('status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1154,15 +1633,15 @@ function renderContacts(activeLead: Lead | undefined): string {
                           <tr>
                             <td>${formatDate(contact.dateContacted)}</td>
                             <td><button class="link-btn" data-action="select-lead" data-id="${contact.leadId}">${escapeHtml(contact.companyName)}</button></td>
-                            <td>${escapeHtml(contact.method)}</td>
+                            <td>${escapeHtml(translateContactMethod(contact.method))}</td>
                             <td>${escapeHtml(contact.subject)}</td>
                             <td>${formatDate(contact.followUpDate)}</td>
-                            <td>${escapeHtml(contact.responseStatus)}</td>
+                            <td>${escapeHtml(translateResponseStatus(contact.responseStatus))}</td>
                           </tr>
                         `,
                       )
                       .join('')
-                  : '<tr><td colspan="6"><div class="empty">No contact history yet.</div></td></tr>'
+                  : `<tr><td colspan="6"><div class="empty">${t('noContactHistory')}</div></td></tr>`
               }
             </tbody>
           </table>
@@ -1178,43 +1657,43 @@ function renderQuotations(activeLead: Lead | undefined): string {
     <section class="section-stack">
       <div class="two-column">
         <article class="panel">
-          <div class="panel-head"><h2>Quotation management</h2><span>Store quotation history so you know which customer was already offered</span></div>
+          <div class="panel-head"><h2>${t('quotationManagementTitle')}</h2><span>${t('quotationManagementDesc')}</span></div>
           <form id="quotation-form" class="form-grid">
-            <label><span>Lead</span><select name="leadId" required><option value="">Select company</option>${state.data.leads
+            <label><span>${t('lead')}</span><select name="leadId" required><option value="">${t('selectCompany')}</option>${state.data.leads
               .map((lead) => `<option value="${lead.id}" ${activeLead?.id === lead.id ? 'selected' : ''}>${escapeHtml(lead.companyName)} • ${escapeHtml(lead.country)}</option>`)
               .join('')}</select></label>
-            <label><span>Quotation Number</span><input name="quotationNumber" required /></label>
-            <label><span>Date Sent</span><input name="dateSent" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></label>
-            <label><span>Product Type</span><input name="productType" required /></label>
-            <label><span>Quotation Value (USD)</span><input name="quotationValue" type="number" min="0" step="0.01" required /></label>
-            <label><span>Validity Date</span><input name="validityDate" type="date" required /></label>
-            <label class="wide"><span>Customer Feedback</span><textarea name="customerFeedback" rows="3" placeholder="Target price / buyer comment / evaluation status"></textarea></label>
-            <div class="form-actions wide"><button class="btn btn-primary" type="submit">Save quotation</button></div>
+            <label><span>${t('quotationNumber')}</span><input name="quotationNumber" required /></label>
+            <label><span>${t('dateSent')}</span><input name="dateSent" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></label>
+            <label><span>${t('productType')}</span><input name="productType" required /></label>
+            <label><span>${t('quotationValueUsd')}</span><input name="quotationValue" type="number" min="0" step="0.01" required /></label>
+            <label><span>${t('validityDate')}</span><input name="validityDate" type="date" required /></label>
+            <label class="wide"><span>${t('customerFeedback')}</span><textarea name="customerFeedback" rows="3" placeholder="${t('customerFeedbackPlaceholder')}"></textarea></label>
+            <div class="form-actions wide"><button class="btn btn-primary" type="submit">${t('saveQuotation')}</button></div>
           </form>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h2>Quotation snapshot</h2><span>Simple overview</span></div>
+          <div class="panel-head"><h2>${t('quotationSnapshot')}</h2><span>${t('quotationSnapshotDesc')}</span></div>
           <div class="stack-list">
-            <div class="summary-card"><strong>Total quotations</strong><p>${allQuotations.length}</p><small>all quotation records</small></div>
-            <div class="summary-card"><strong>Total quoted value</strong><p>${formatCurrency(allQuotations.reduce((sum, item) => sum + item.quotationValue, 0))}</p><small>for quick control</small></div>
-            <div class="summary-card"><strong>Quoted customers</strong><p>${state.data.leads.filter((lead) => lead.quotations.length > 0).length}</p><small>who already received quotation</small></div>
+            <div class="summary-card"><strong>${t('totalQuotations')}</strong><p>${allQuotations.length}</p><small>${t('allQuotationRecords')}</small></div>
+            <div class="summary-card"><strong>${t('totalQuotedValue')}</strong><p>${formatCurrency(allQuotations.reduce((sum, item) => sum + item.quotationValue, 0))}</p><small>${t('forQuickControl')}</small></div>
+            <div class="summary-card"><strong>${t('quotedCustomers')}</strong><p>${state.data.leads.filter((lead) => lead.quotations.length > 0).length}</p><small>${t('alreadyReceivedQuotation')}</small></div>
           </div>
         </article>
       </div>
 
       <article class="panel">
-        <div class="panel-head"><h2>Quotation history</h2><span>Know which customer already got an offer</span></div>
+        <div class="panel-head"><h2>${t('quotationHistory')}</h2><span>${t('quotationHistoryDesc')}</span></div>
         <div class="table-shell">
           <table>
             <thead>
               <tr>
-                <th>Quotation</th>
-                <th>Company</th>
-                <th>Date</th>
-                <th>Product</th>
-                <th>Value</th>
-                <th>Feedback</th>
+                <th>${t('quotation')}</th>
+                <th>${t('company')}</th>
+                <th>${t('date')}</th>
+                <th>${t('product')}</th>
+                <th>${t('value')}</th>
+                <th>${t('feedback')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1229,12 +1708,12 @@ function renderQuotations(activeLead: Lead | undefined): string {
                             <td>${formatDate(quotation.dateSent)}</td>
                             <td>${escapeHtml(quotation.productType)}</td>
                             <td>${formatCurrency(quotation.quotationValue)}</td>
-                            <td>${escapeHtml(quotation.customerFeedback || 'No feedback')}</td>
+                            <td>${escapeHtml(quotation.customerFeedback || t('noFeedback'))}</td>
                           </tr>
                         `,
                       )
                       .join('')
-                  : '<tr><td colspan="6"><div class="empty">No quotations stored yet.</div></td></tr>'
+                  : `<tr><td colspan="6"><div class="empty">${t('noQuotationsStored')}</div></td></tr>`
               }
             </tbody>
           </table>
@@ -1249,17 +1728,17 @@ function renderDiscovery(countries: string[], categories: string[], customerType
   return `
     <section class="section-stack">
       <article class="panel">
-        <div class="panel-head"><h2>Lead discovery</h2><span>Search new company and block duplicate before importing</span></div>
+        <div class="panel-head"><h2>${t('leadDiscoveryTitle')}</h2><span>${t('leadDiscoveryDesc')}</span></div>
         <div class="filter-grid">
-          <label><span>Search</span><input id="discovery-search" type="search" value="${escapeHtml(state.discoverySearch)}" placeholder="Country, company, keyword" /></label>
-          <label><span>Country</span><select id="discovery-country">${countries
-            .map((country) => `<option value="${escapeHtml(country)}" ${state.discoveryCountry === country ? 'selected' : ''}>${escapeHtml(country)}</option>`)
+          <label><span>${t('search')}</span><input id="discovery-search" type="search" value="${escapeHtml(state.discoverySearch)}" placeholder="${t('discoverySearchPlaceholder')}" /></label>
+          <label><span>${t('country')}</span><select id="discovery-country">${countries
+            .map((country) => `<option value="${escapeHtml(country)}" ${state.discoveryCountry === country ? 'selected' : ''}>${escapeHtml(country === 'All' ? t('all') : country)}</option>`)
             .join('')}</select></label>
-          <label><span>Industry</span><select id="discovery-category">${categories
+          <label><span>${t('industry')}</span><select id="discovery-category">${categories
             .map((category) => `<option value="${escapeHtml(category)}" ${state.discoveryCategory === category ? 'selected' : ''}>${escapeHtml(category)}</option>`)
             .join('')}</select></label>
-          <label><span>Customer Type</span><select id="discovery-type">${customerTypes
-            .map((type) => `<option value="${escapeHtml(type)}" ${state.discoveryType === type ? 'selected' : ''}>${escapeHtml(type)}</option>`)
+          <label><span>${t('customerType')}</span><select id="discovery-type">${customerTypes
+            .map((type) => `<option value="${escapeHtml(type)}" ${state.discoveryType === type ? 'selected' : ''}>${escapeHtml(type === 'All' ? t('all') : translateCustomerType(type))}</option>`)
             .join('')}</select></label>
         </div>
         <div class="card-grid">
@@ -1272,26 +1751,26 @@ function renderDiscovery(countries: string[], categories: string[], customerType
                         <div class="detail-head">
                           <div>
                             <h3>${escapeHtml(candidate.companyName)}</h3>
-                            <p>${escapeHtml(candidate.country)} • ${escapeHtml(candidate.customerType)}</p>
+                            <p>${escapeHtml(candidate.country)} • ${escapeHtml(translateCustomerType(candidate.customerType))}</p>
                           </div>
-                          <span class="status-pill ${candidate.duplicate ? 'warn' : ''}">${candidate.duplicate ? 'Already exists' : 'New prospect'}</span>
+                          <span class="status-pill ${candidate.duplicate ? 'warn' : ''}">${candidate.duplicate ? t('alreadyExists') : t('newProspect')}</span>
                         </div>
                         <p>${escapeHtml(candidate.industryCategory)}</p>
-                        <p>${escapeHtml(candidate.email || 'No email')} • ${escapeHtml(candidate.contactPerson || 'No PIC')}</p>
+                        <p>${escapeHtml(candidate.email || t('noEmail'))} • ${escapeHtml(candidate.contactPerson || t('noPic'))}</p>
                         <div class="tag-row">${candidate.keywords.map((keyword) => `<span class="tag">${escapeHtml(keyword)}</span>`).join('')}</div>
                         ${
                           candidate.duplicate
-                            ? `<div class="warning-box">${escapeHtml(candidate.duplicate.companyName)} already exists • last contact ${formatDate(getLastActivityDate(candidate.duplicate))} • status ${escapeHtml(candidate.duplicate.status)}</div>`
+                            ? `<div class="warning-box">${escapeHtml(candidate.duplicate.companyName)} ${state.uiLanguage === 'id' ? 'sudah ada' : 'already exists'} • ${t('lastContact').toLowerCase()} ${formatDate(getLastActivityDate(candidate.duplicate))} • ${t('status').toLowerCase()} ${escapeHtml(translateLeadStatus(candidate.duplicate.status))}</div>`
                             : ''
                         }
                         <div class="form-actions">
-                          <button class="btn btn-primary" data-action="import-candidate" data-id="${candidate.id}" ${candidate.duplicate ? 'disabled' : ''}>Add to CRM</button>
+                          <button class="btn btn-primary" data-action="import-candidate" data-id="${candidate.id}" ${candidate.duplicate ? 'disabled' : ''}>${t('addToCrm')}</button>
                         </div>
                       </article>
                     `,
                   )
                   .join('')
-              : '<p class="empty">No discovery candidates match the current filters.</p>'
+              : `<p class="empty">${t('noDiscoveryCandidates')}</p>`
           }
         </div>
       </article>
@@ -1305,27 +1784,27 @@ function renderAssistant(): string {
     <section class="section-stack">
       <div class="two-column">
         <article class="panel">
-          <div class="panel-head"><h2>AI Assistant</h2><span>Generate quick sales text from selected company data</span></div>
+          <div class="panel-head"><h2>${t('aiAssistantTitle')}</h2><span>${t('aiAssistantDesc')}</span></div>
           <form id="assistant-form" class="form-grid">
-            <label><span>Lead</span><select name="leadId" required>${state.data.leads
+            <label><span>${t('lead')}</span><select name="leadId" required>${state.data.leads
               .map((lead) => `<option value="${lead.id}" ${state.assistantLeadId === lead.id ? 'selected' : ''}>${escapeHtml(lead.companyName)} • ${escapeHtml(lead.country)}</option>`)
               .join('')}</select></label>
-            <label><span>Content Type</span><select name="assistantType">${assistantTypes
-              .map((type) => `<option value="${type}" ${state.assistantType === type ? 'selected' : ''}>${type}</option>`)
+            <label><span>${t('contentType')}</span><select name="assistantType">${assistantTypes
+              .map((type) => `<option value="${type}" ${state.assistantType === type ? 'selected' : ''}>${translateAssistantType(type)}</option>`)
               .join('')}</select></label>
-            <label class="wide"><span>Additional Context</span><textarea name="context" rows="5" placeholder="Product focus, pricing note, meeting result, atau complaint detail"></textarea></label>
+            <label class="wide"><span>${t('additionalContext')}</span><textarea name="context" rows="5" placeholder="${t('additionalContextPlaceholder')}"></textarea></label>
             <div class="form-actions wide">
-              <button class="btn btn-primary" type="submit">Generate draft</button>
-              <button class="btn" type="button" data-action="copy-output">Copy output</button>
+              <button class="btn btn-primary" type="submit">${t('generateDraft')}</button>
+              <button class="btn" type="button" data-action="copy-output">${t('copyOutput')}</button>
             </div>
           </form>
         </article>
 
         <article class="panel">
-          <div class="panel-head"><h2>Draft output</h2><span>${escapeHtml(currentLead?.companyName || 'Select a lead')}</span></div>
+          <div class="panel-head"><h2>${t('draftOutput')}</h2><span>${escapeHtml(currentLead?.companyName || t('selectLead'))}</span></div>
           <div class="draft-box">
-            <label><span>Subject</span><input readonly value="${escapeHtml(state.generatedSubject)}" /></label>
-            <label><span>Content</span><textarea readonly rows="16">${escapeHtml(state.generatedOutput)}</textarea></label>
+            <label><span>${t('subject')}</span><input readonly value="${escapeHtml(state.generatedSubject)}" /></label>
+            <label><span>${t('content')}</span><textarea readonly rows="16">${escapeHtml(state.generatedOutput)}</textarea></label>
           </div>
         </article>
       </div>
@@ -1375,7 +1854,7 @@ function bindEvents(): void {
       state.generatedSubject = ''
       state.generatedOutput = ''
       persist()
-      setNotice('Sample data loaded.', 'success')
+      setNotice(state.uiLanguage === 'id' ? 'Data sample berhasil dimuat.' : 'Sample data loaded.', 'success')
       renderApp()
       return
     }
@@ -1386,7 +1865,7 @@ function bindEvents(): void {
       state.generatedSubject = ''
       state.generatedOutput = ''
       persist()
-      setNotice('CRM data reset.', 'info')
+      setNotice(state.uiLanguage === 'id' ? 'Data CRM berhasil direset.' : 'CRM data reset.', 'info')
       renderApp()
       return
     }
@@ -1405,6 +1884,12 @@ function bindEvents(): void {
 
   app.addEventListener('change', (event) => {
     const target = event.target as HTMLInputElement | HTMLSelectElement
+    if (target.id === 'language-switch') {
+      state.uiLanguage = target.value === 'en' ? 'en' : 'id'
+      persistUiLanguage()
+      renderApp()
+      return
+    }
     if (target.id === 'country-filter') {
       state.countryFilter = target.value
       renderApp()
@@ -1435,14 +1920,14 @@ function bindEvents(): void {
       if (!lead) return
       lead.status = target.value as LeadStatus
       persist()
-      setNotice(`Status updated for ${lead.companyName}.`, 'success')
+      setNotice(state.uiLanguage === 'id' ? `Status untuk ${lead.companyName} berhasil diperbarui.` : `Status updated for ${lead.companyName}.`, 'success')
       renderApp()
     }
   })
 
   app.addEventListener('input', (event) => {
     const target = event.target as HTMLInputElement
-    if (target.id === 'lead-search') {
+    if (target.id === 'lead-search' || target.id === 'global-search') {
       state.leadSearch = target.value
       renderApp()
       return
@@ -1482,7 +1967,12 @@ function handleLeadSubmit(form: HTMLFormElement): void {
   const email = String(formData.get('email') || '').trim()
   const duplicate = findDuplicateLead(companyName, website, email)
   if (duplicate) {
-    setNotice(`Stop double sent: ${duplicate.companyName} already exists • last contact ${formatDate(getLastActivityDate(duplicate))} • status ${duplicate.status}`, 'error')
+    setNotice(
+      state.uiLanguage === 'id'
+        ? `Stop double sent: ${duplicate.companyName} sudah ada • kontak terakhir ${formatDate(getLastActivityDate(duplicate))} • status ${translateLeadStatus(duplicate.status)}`
+        : `Stop double sent: ${duplicate.companyName} already exists • last contact ${formatDate(getLastActivityDate(duplicate))} • status ${duplicate.status}`,
+      'error',
+    )
     state.activeLeadId = duplicate.id
     renderApp()
     return
@@ -1511,7 +2001,7 @@ function handleLeadSubmit(form: HTMLFormElement): void {
   state.activeLeadId = lead.id
   state.assistantLeadId = lead.id
   persist()
-  setNotice(`Customer ${lead.companyName} saved.`, 'success')
+  setNotice(state.uiLanguage === 'id' ? `Customer ${lead.companyName} berhasil disimpan.` : `Customer ${lead.companyName} saved.`, 'success')
   renderApp()
 }
 
@@ -1519,7 +2009,7 @@ function handleContactSubmit(form: HTMLFormElement): void {
   const formData = new FormData(form)
   const lead = getLeadById(String(formData.get('leadId') || ''))
   if (!lead) {
-    setNotice('Please select a company.', 'error')
+    setNotice(state.uiLanguage === 'id' ? 'Silakan pilih company.' : 'Please select a company.', 'error')
     renderApp()
     return
   }
@@ -1540,7 +2030,7 @@ function handleContactSubmit(form: HTMLFormElement): void {
   state.activeLeadId = lead.id
   state.assistantLeadId = lead.id
   persist()
-  setNotice(`Follow up updated for ${lead.companyName}.`, 'success')
+  setNotice(state.uiLanguage === 'id' ? `Follow up untuk ${lead.companyName} berhasil diperbarui.` : `Follow up updated for ${lead.companyName}.`, 'success')
   renderApp()
 }
 
@@ -1548,7 +2038,7 @@ function handleQuotationSubmit(form: HTMLFormElement): void {
   const formData = new FormData(form)
   const lead = getLeadById(String(formData.get('leadId') || ''))
   if (!lead) {
-    setNotice('Please select a company.', 'error')
+    setNotice(state.uiLanguage === 'id' ? 'Silakan pilih company.' : 'Please select a company.', 'error')
     renderApp()
     return
   }
@@ -1566,7 +2056,7 @@ function handleQuotationSubmit(form: HTMLFormElement): void {
   state.activeLeadId = lead.id
   state.assistantLeadId = lead.id
   persist()
-  setNotice(`Quotation saved for ${lead.companyName}.`, 'success')
+  setNotice(state.uiLanguage === 'id' ? `Quotation untuk ${lead.companyName} berhasil disimpan.` : `Quotation saved for ${lead.companyName}.`, 'success')
   renderApp()
 }
 
@@ -1574,7 +2064,7 @@ function handleAssistantSubmit(form: HTMLFormElement): void {
   const formData = new FormData(form)
   const lead = getLeadById(String(formData.get('leadId') || ''))
   if (!lead) {
-    setNotice('Please choose a lead.', 'error')
+    setNotice(state.uiLanguage === 'id' ? 'Silakan pilih lead.' : 'Please choose a lead.', 'error')
     renderApp()
     return
   }
@@ -1594,7 +2084,12 @@ function handleAssistantSubmit(form: HTMLFormElement): void {
     content: generated.content,
   })
   persist()
-  setNotice(`${type} generated for ${lead.companyName}.`, 'success')
+  setNotice(
+    state.uiLanguage === 'id'
+      ? `${translateAssistantType(type)} untuk ${lead.companyName} berhasil dibuat.`
+      : `${type} generated for ${lead.companyName}.`,
+    'success',
+  )
   renderApp()
 }
 
@@ -1638,7 +2133,12 @@ function importDiscoveryCandidate(candidateId: string): void {
   const duplicate = findDuplicateLead(candidate.companyName, candidate.website, candidate.email)
   if (duplicate) {
     state.activeLeadId = duplicate.id
-    setNotice(`Stop double sent: ${duplicate.companyName} already exists in database.`, 'error')
+    setNotice(
+      state.uiLanguage === 'id'
+        ? `Stop double sent: ${duplicate.companyName} sudah ada di database.`
+        : `Stop double sent: ${duplicate.companyName} already exists in database.`,
+      'error',
+    )
     renderApp()
     return
   }
@@ -1663,7 +2163,7 @@ function importDiscoveryCandidate(candidateId: string): void {
   state.data.leads.unshift(newLead)
   state.activeLeadId = newLead.id
   persist()
-  setNotice(`${candidate.companyName} added to CRM.`, 'success')
+  setNotice(state.uiLanguage === 'id' ? `${candidate.companyName} berhasil ditambahkan ke CRM.` : `${candidate.companyName} added to CRM.`, 'success')
   renderApp()
 }
 
@@ -1734,18 +2234,18 @@ function exportWorkbook(): void {
     'Reminders',
   )
   XLSX.writeFile(workbook, `crm-export-marketing-${new Date().toISOString().slice(0, 10)}.xlsx`)
-  setNotice('Excel exported successfully.', 'success')
+  setNotice(state.uiLanguage === 'id' ? 'Excel berhasil diexport.' : 'Excel exported successfully.', 'success')
   renderApp()
 }
 
 async function copyGeneratedOutput(): Promise<void> {
   const output = `${state.generatedSubject}\n\n${state.generatedOutput}`.trim()
   if (!output) {
-    setNotice('Generate a draft first.', 'error')
+    setNotice(state.uiLanguage === 'id' ? 'Buat draft terlebih dulu.' : 'Generate a draft first.', 'error')
     renderApp()
     return
   }
   await navigator.clipboard.writeText(output)
-  setNotice('Draft copied to clipboard.', 'success')
+  setNotice(state.uiLanguage === 'id' ? 'Draft berhasil disalin ke clipboard.' : 'Draft copied to clipboard.', 'success')
   renderApp()
 }

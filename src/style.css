@@ -280,6 +280,27 @@ h4 {
   outline: none;
 }
 
+.language-switch {
+  min-width: 96px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  display: grid;
+  gap: 8px;
+}
+
+.language-switch select {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-weight: 700;
+}
+
+.language-switch select:focus {
+  outline: none;
+}
+
 .btn,
 .tab,
 .segment-control button,
