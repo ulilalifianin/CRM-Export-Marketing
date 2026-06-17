@@ -127,7 +127,7 @@ interface AppState {
 const storageKey = 'crm-export-marketing-v1'
 const uiLanguageKey = 'crm-export-marketing-ui-language'
 const authSessionKey = 'crm-export-marketing-authenticated'
-const sharedPassword = 'ganti-password-anda'
+const sharedPassword = '12345678'
 const pipelineStatuses: LeadStatus[] = [
   'New Lead',
   'Contacted',
