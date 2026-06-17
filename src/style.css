@@ -75,6 +75,56 @@ p {
   min-height: 100vh;
 }
 
+.auth-shell {
+  width: min(980px, calc(100vw - 28px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  display: grid;
+  align-content: center;
+  gap: 20px;
+}
+
+.auth-topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.auth-card {
+  width: min(520px, 100%);
+  padding: 28px;
+  border-radius: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.auth-card h2 {
+  margin-bottom: 10px;
+}
+
+.auth-copy,
+.auth-hint {
+  color: var(--muted);
+}
+
+.auth-copy {
+  margin-bottom: 20px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-hint {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
 .shell {
   width: min(1440px, calc(100vw - 28px));
   margin: 0 auto;
@@ -926,12 +976,19 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .auth-shell {
+    width: min(100vw - 18px, 100%);
+    align-content: start;
+    padding-top: 18px;
+  }
+
   .sidebar {
     position: static;
     height: auto;
   }
 
   .topbar,
+  .auth-topbar,
   .hero-band,
   .section-head,
   .panel-head,

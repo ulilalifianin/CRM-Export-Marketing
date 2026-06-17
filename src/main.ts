@@ -105,6 +105,8 @@ interface AppData {
 interface AppState {
   data: AppData
   uiLanguage: UiLanguage
+  isAuthenticated: boolean
+  authError: string | null
   view: ViewKey
   timeframe: ReportWindow
   leadSearch: string
@@ -124,6 +126,8 @@ interface AppState {
 
 const storageKey = 'crm-export-marketing-v1'
 const uiLanguageKey = 'crm-export-marketing-ui-language'
+const authSessionKey = 'crm-export-marketing-authenticated'
+const sharedPassword = 'ganti-password-anda'
 const pipelineStatuses: LeadStatus[] = [
   'New Lead',
   'Contacted',
@@ -336,6 +340,16 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     daily: 'Harian',
     weekly: 'Mingguan',
     monthly: 'Bulanan',
+    loginTitle: 'Masuk ke CRM Export Marketing',
+    loginDesc: 'CRM ini hanya bisa dibuka oleh orang yang memiliki password yang benar.',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'Masukkan password bersama',
+    loginButton: 'Masuk',
+    loginHint: 'Gunakan 1 password bersama untuk tim yang diizinkan.',
+    wrongPassword: 'Password salah. Coba lagi.',
+    logout: 'Logout',
+    accessRestricted: 'Akses dibatasi',
+    sessionActive: 'Sesi aktif',
   },
   en: {
     all: 'All',
@@ -528,6 +542,16 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     daily: 'Daily',
     weekly: 'Weekly',
     monthly: 'Monthly',
+    loginTitle: 'Sign in to CRM Export Marketing',
+    loginDesc: 'This CRM can only be opened by people who have the correct password.',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'Enter the shared password',
+    loginButton: 'Sign in',
+    loginHint: 'Use one shared password for the approved team.',
+    wrongPassword: 'Incorrect password. Please try again.',
+    logout: 'Logout',
+    accessRestricted: 'Restricted access',
+    sessionActive: 'Session active',
   },
 }
 
@@ -540,6 +564,8 @@ document.title = 'CRM Export Marketing'
 const state: AppState = {
   data: loadData(),
   uiLanguage: loadUiLanguage(),
+  isAuthenticated: loadAuthState(),
+  authError: null,
   view: 'dashboard',
   timeframe: 'weekly',
   leadSearch: '',
@@ -564,6 +590,10 @@ document.documentElement.lang = state.uiLanguage
 renderApp()
 bindEvents()
 
+function loadAuthState(): boolean {
+  return sessionStorage.getItem(authSessionKey) === 'true'
+}
+
 function loadUiLanguage(): UiLanguage {
   return localStorage.getItem(uiLanguageKey) === 'en' ? 'en' : 'id'
 }
@@ -571,6 +601,14 @@ function loadUiLanguage(): UiLanguage {
 function persistUiLanguage(): void {
   localStorage.setItem(uiLanguageKey, state.uiLanguage)
   document.documentElement.lang = state.uiLanguage
+}
+
+function persistAuthState(): void {
+  if (state.isAuthenticated) {
+    sessionStorage.setItem(authSessionKey, 'true')
+  } else {
+    sessionStorage.removeItem(authSessionKey)
+  }
 }
 
 function t(key: string): string {
@@ -1147,6 +1185,11 @@ function getPriorityLeads(): Lead[] {
 }
 
 function renderApp(): void {
+  if (!state.isAuthenticated) {
+    app.innerHTML = renderLoginScreen()
+    return
+  }
+
   const filteredLeads = getFilteredLeads()
   const activeLead = getLeadById(state.activeLeadId) ?? filteredLeads[0] ?? state.data.leads[0]
   const reminders = getReminders(state.data.leads)
@@ -1205,6 +1248,7 @@ function renderApp(): void {
                 <option value="en" ${state.uiLanguage === 'en' ? 'selected' : ''}>EN</option>
               </select>
             </label>
+            <button class="btn" data-action="logout">${t('logout')}</button>
             <button class="btn btn-primary" data-view="leads">${t('newCustomer')}</button>
             <button class="btn" data-view="contacts">${t('updateFollowUpShort')}</button>
             <button class="btn" data-action="export-excel">${t('export')}</button>
@@ -1255,6 +1299,40 @@ function renderApp(): void {
           }
         </main>
       </div>
+    </div>
+  `
+}
+
+function renderLoginScreen(): string {
+  return `
+    <div class="auth-shell">
+      <div class="auth-topbar">
+        <div>
+          <p class="eyebrow">${t('accessRestricted')}</p>
+          <h1>CRM Export Marketing</h1>
+        </div>
+        <label class="language-switch">
+          <span>${t('language')}</span>
+          <select id="language-switch">
+            <option value="id" ${state.uiLanguage === 'id' ? 'selected' : ''}>ID</option>
+            <option value="en" ${state.uiLanguage === 'en' ? 'selected' : ''}>EN</option>
+          </select>
+        </label>
+      </div>
+      <article class="auth-card">
+        <p class="eyebrow">${t('accessRestricted')}</p>
+        <h2>${t('loginTitle')}</h2>
+        <p class="auth-copy">${t('loginDesc')}</p>
+        <form id="login-form" class="auth-form">
+          <label>
+            <span>${t('passwordLabel')}</span>
+            <input name="password" type="password" placeholder="${t('passwordPlaceholder')}" required />
+          </label>
+          ${state.authError ? `<div class="warning-box">${escapeHtml(state.authError)}</div>` : ''}
+          <button class="btn btn-primary" type="submit">${t('loginButton')}</button>
+        </form>
+        <p class="auth-hint">${t('loginHint')}</p>
+      </article>
     </div>
   `
 }
@@ -1840,6 +1918,16 @@ function bindEvents(): void {
       renderApp()
       return
     }
+    if (action === 'logout') {
+      state.isAuthenticated = false
+      state.authError = null
+      state.notice = null
+      state.generatedSubject = ''
+      state.generatedOutput = ''
+      persistAuthState()
+      renderApp()
+      return
+    }
     if (action === 'select-lead' && id) {
       state.activeLeadId = id
       state.assistantLeadId = id
@@ -1942,6 +2030,10 @@ function bindEvents(): void {
     event.preventDefault()
     const form = event.target
     if (!(form instanceof HTMLFormElement)) return
+    if (form.id === 'login-form') {
+      handleLoginSubmit(form)
+      return
+    }
     if (form.id === 'lead-form') {
       handleLeadSubmit(form)
       return
@@ -1958,6 +2050,21 @@ function bindEvents(): void {
       handleAssistantSubmit(form)
     }
   })
+}
+
+function handleLoginSubmit(form: HTMLFormElement): void {
+  const formData = new FormData(form)
+  const password = String(formData.get('password') || '')
+  if (password !== sharedPassword) {
+    state.authError = t('wrongPassword')
+    renderApp()
+    return
+  }
+
+  state.isAuthenticated = true
+  state.authError = null
+  persistAuthState()
+  renderApp()
 }
 
 function handleLeadSubmit(form: HTMLFormElement): void {
